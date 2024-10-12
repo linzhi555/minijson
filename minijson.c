@@ -1,36 +1,28 @@
 #include "minijson.h"
+#include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 const int INIT_JSTR_LEN = 100;
 
-static bool isEmpty(char c) {
-    switch (c) {
-    case ' ':
-    case '\t':
-    case '\r':
-    case '\n':
-    case '\0':
-        return true;
-    default:
-        return false;
+static int skip_space(const char *cs) {
+    for (int i = 0; cs[i] != '\0'; i++) {
+        if (!isspace(cs[i])) return i;
     }
+    return 0;
 }
 
-static int skip_empty(const char* cs) {
-    for (int i = 0;; i++) {
-        if (!isEmpty(cs[i])) return i;
+static int find_space(const char *cs) {
+    for (int i = 0; cs[i] != '\0'; i++) {
+        if (isspace(cs[i])) return i;
     }
+    return 0;
 }
 
-static int find_empty(const char* cs) {
-    for (int i = 0;; i++) {
-        if (isEmpty(cs[i])) return i;
-    }
-}
-
-int jnum_from_cstr(JsonNum* num, const char* cs, int n) {
+static int jnum_from_cstr(JsonNum *num, const char *cs, int n) {
     int64_t intRes;
     double floatRes;
 
@@ -38,10 +30,10 @@ int jnum_from_cstr(JsonNum* num, const char* cs, int n) {
         return 0;
     }
 
-    int preEmpty = skip_empty(cs);
+    int preEmpty = skip_space(cs);
     cs += preEmpty;
 
-    char* temp = malloc(sizeof(char) * (n + 1));
+    char *temp = malloc(sizeof(char) * (n + 1));
     strcpy(temp, cs);
 
     int res = sscanf(cs, "%ld", &intRes);
@@ -62,32 +54,37 @@ int jnum_from_cstr(JsonNum* num, const char* cs, int n) {
     return 0;
 }
 
-void init_jstr(JsonStr* str) {
+static void init_jstr(JsonStr *str) {
+    assert(str != NULL);
     str->len = 0;
-    str->cap = 100;
-    str->data = calloc(sizeof(char), INIT_JSTR_LEN);
+    str->cap = INIT_JSTR_LEN + 1;
+    str->data = malloc(str->cap * sizeof(char));
 }
 
-int _jstr_adjust_cap(JsonStr* str, int newCap) {
+static int _jstr_adjust_cap(JsonStr *str, int newCap) {
+    assert(str != NULL);
     if (str->len + 1 <= newCap) {
-        str->data = realloc(str->data, newCap);
+        str->data = realloc(str->data, newCap * sizeof(char));
         return newCap;
     }
 
     return 0;
 }
 
-int jstr_cpy(JsonStr* dst, const JsonStr* src) {
+static int jstr_cpy(JsonStr *dst, const JsonStr *src) {
     memcpy(dst, src, sizeof(JsonStr));
     dst->data = malloc(src->cap);
     memcpy(dst->data, src->data, src->cap);
     return dst->len;
 }
 
-int jstr_cpy_cstr(JsonStr* str, const char* cs, int len) {
-    if (str->cap <= len) {
-        str->cap = len * 2;
-        str->data = realloc(str->data, str->cap);
+static int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {
+    assert(str != NULL);
+    if (str->cap <= len + 1) {
+        str->cap = (len + 1) * 2;
+
+        if (str->data != NULL) free(str->data);
+        str->data = malloc(sizeof(char) * str->cap);
     }
 
     strncpy(str->data, cs, len);
@@ -97,15 +94,15 @@ int jstr_cpy_cstr(JsonStr* str, const char* cs, int len) {
     return len;
 }
 
-const char* jstr_cstr(const JsonStr* str) {
+const char *jstr_cstr(const JsonStr *str) {
     return str->data;
 }
 
-int jstr_to_jnum(const JsonStr* str, JsonNum* num) {
+int jstr_to_jnum(const JsonStr *str, JsonNum *num) {
     return jnum_from_cstr(num, jstr_cstr(str), str->len);
 }
 
-int jstr_append(JsonStr* str, char newch) {
+int jstr_append(JsonStr *str, char newch) {
     if (str->cap <= str->len - 1) {
         _jstr_adjust_cap(str, str->cap * 2);
     }
@@ -116,7 +113,7 @@ int jstr_append(JsonStr* str, char newch) {
     return str->len;
 }
 
-int jstr_from_str(JsonStr* dst, const char* src) {
+int jstr_from_cstr(JsonStr *dst, const char *src) {
     if (src[0] != '\"') return 0;
     for (int i = 1; src[i] != '\0'; i++) {
         if (src[i] == '\\' && src[i + 1] != '\0') {
@@ -132,6 +129,7 @@ int jstr_from_str(JsonStr* dst, const char* src) {
 }
 
 typedef enum {
+    TError,
     TNum,
     TStr,
     TTrue,
@@ -147,78 +145,94 @@ typedef enum {
 
 typedef struct {
     TokenType type;
-    JsonStr content;
+    JsonStr jstr;
+    JsonNum jnum;
 } Token;
 
 typedef struct {
-    const char* src;
+    const char *src;
     int cursor;
     bool isFinished;
     Token curToken;
     int curLen;
 } Lexer;
 
-int init_lexer(Lexer* l, const char* src) {
+int init_lexer(Lexer *l, const char *src) {
     l->src = src;
     l->cursor = 0;
     l->isFinished = false;
     l->curLen = 0;
-    init_jstr(&l->curToken.content);
+    init_jstr(&l->curToken.jstr);
+
     return 0;
 }
 
-const Token* lexer_peek(Lexer* l) {
-    const char* curStr = l->src + l->cursor;
-    const int preEmpty = skip_empty(curStr);
-    const char* str = curStr + preEmpty;
-    int len;  // the token actual lenth(no empty chars)
+void free_lexer(Lexer *l) {
+}
+
+const Token *lexer_peek(Lexer *l) {
+    const char *curStr = l->src + l->cursor;
+    const int preEmpty = skip_space(curStr);
+    const char *str = curStr + preEmpty;
+    int len = 0;  // the token actual lenth(no empty chars)
     switch (str[0]) {
     case '{':
         len = 1;
         l->curToken.type = TLBrace;
+        break;
     case '}':
         len = 1;
         l->curToken.type = TRBrace;
+        break;
     case '[':
         len = 1;
         l->curToken.type = TLBracket;
+        break;
     case ']':
         len = 1;
         l->curToken.type = TRBracket;
+        break;
     case ':':
         len = 1;
         l->curToken.type = TColon;
+        break;
     case ',':
         len = 1;
         l->curToken.type = TComma;
+        break;
     default:
         break;
     }
 
     if (len != 0) goto finish;
 
-    if (strncmp(str, "null", 4) && isEmpty(str[4])) {
+    if (strncmp(str, "null", 4) && isspace(str[4])) {
         l->curToken.type = TNUll;
         len = 4;
     }
 
-    if (strncmp(str, "true", 4) && isEmpty(str[4])) {
+    if (strncmp(str, "true", 4) && isspace(str[4])) {
         l->curToken.type = TTrue;
         len = 4;
     }
 
-    if (strncmp(str, "false", 5) && isEmpty(str[5])) {
+    if (strncmp(str, "false", 5) && isspace(str[5])) {
         l->curToken.type = TFalse;
         len = 5;
     }
 
-    JsonNum resNum;
-    len = jnum_from_cstr(&resNum, str, find_empty(str) + 1);
-    if (len != 0) goto finish;
+    len = jnum_from_cstr(&l->curToken.jnum, str, find_space(str) + 1);
+    if (len != 0) {
+        l->curToken.type = TNum;
+        goto finish;
+    }
 
-    JsonStr resStr;
-    len = jstr_from_str(&resStr, str);
-    if (len != 0) goto finish;
+    len = jstr_from_cstr(&l->curToken.jstr, str);
+
+    if (len != 0) {
+        l->curToken.type = TStr;
+        goto finish;
+    }
 
     return NULL;
 finish:
@@ -226,37 +240,37 @@ finish:
     return &l->curToken;
 }
 
-bool lexer_peek_expect(Lexer* l, TokenType expect) {
-    const Token* tk = lexer_peek(l);
+bool lexer_peek_expect(Lexer *l, TokenType expect) {
+    const Token *tk = lexer_peek(l);
     if (tk == NULL) return false;
     return tk->type == expect;
 }
 
-int lexer_next(Lexer* l) {
+int lexer_next(Lexer *l) {
     l->cursor += l->curLen;
     lexer_peek(l);
     return l->curLen;
 }
 
-static int parse_base_obj(JsonBaseObj* obj, Lexer* l);
+static int parse_base_obj(JsonBaseObj *obj, Lexer *l);
 
-static int parse_null(Lexer* l) {
+static int parse_null(Lexer *l) {
     int old = l->cursor;
     if (!lexer_peek_expect(l, TNUll)) return 0;
     lexer_next(l);
     return l->cursor - old;
 }
 
-static int parse_num(JsonNum* num, Lexer* l) {
+static int parse_num(JsonNum *num, Lexer *l) {
     int old = l->cursor;
     if (!lexer_peek_expect(l, TNum)) return 0;
-    const Token* tk = lexer_peek(l);
-    jstr_to_jnum(&tk->content, num);
+    const Token *tk = lexer_peek(l);
+    *num = l->curToken.jnum;
     lexer_next(l);
     return l->cursor - old;
 }
 
-static int parse_bool(JsonBool* jbool, Lexer* l) {
+static int parse_bool(JsonBool *jbool, Lexer *l) {
     int old = l->cursor;
 
     if (lexer_peek_expect(l, TTrue)) {
@@ -276,13 +290,13 @@ fail:
     return 0;
 }
 
-static int parse_str(JsonStr* str, Lexer* l) {
+static int parse_str(JsonStr *str, Lexer *l) {
     int old = l->cursor;
     if (!lexer_peek_expect(l, TStr)) {
         goto fail;
     }
 
-    jstr_cpy(str, &lexer_peek(l)->content);
+    jstr_cpy(str, &l->curToken.jstr);
     lexer_next(l);
 
 fail:
@@ -290,7 +304,7 @@ fail:
     return 0;
 }
 
-static int parse_array(JsonArray* resObj, Lexer* l) {
+static int parse_array(JsonArray *resObj, Lexer *l) {
     int old = l->cursor;
 
 fail:
@@ -299,7 +313,7 @@ fail:
     return 0;
 }
 
-static int parse_obj_field(JsonMap* resObj, Lexer* l) {
+static int parse_obj_field(JsonMap *resObj, Lexer *l) {
     int old = l->cursor;
     JsonStr strObj;
     JsonBaseObj fieldObj;
@@ -307,7 +321,7 @@ static int parse_obj_field(JsonMap* resObj, Lexer* l) {
     if (!lexer_peek_expect(l, TStr)) goto fail;
     Token temp;
     lexer_next(l);
-    strObj = temp.content;
+    strObj = temp.jstr;
 
     if (!lexer_peek_expect(l, TColon)) goto fail;
     lexer_next(l);
@@ -322,13 +336,13 @@ fail:
     return 0;
 }
 
-static int init_json_map(JsonMap* map) {
+static int init_json_map(JsonMap *map) {
     JsonMap temp = { .cap = 0, .len = 0, .keyList = NULL, .valueList = NULL };
     *map = temp;
     return 0;
 }
 
-static int parse_map(JsonMap* resObj, Lexer* l) {
+static int parse_map(JsonMap *resObj, Lexer *l) {
     int old = l->cursor;
     JsonMap obj;
     init_json_map(&obj);
@@ -350,7 +364,7 @@ fail:
     return 0;
 }
 
-static int parse_base_obj(JsonBaseObj* obj, Lexer* l) {
+static int parse_base_obj(JsonBaseObj *obj, Lexer *l) {
     int offset = 0;
 
     offset = parse_map(&obj->jsonMap, l);
@@ -392,8 +406,19 @@ static int parse_base_obj(JsonBaseObj* obj, Lexer* l) {
     return 0;
 }
 
-const char* minijson_version() {
+const char *minijson_version() {
     return "0.0.1";
 }
-JsonMap* minijson_parse_str();
+
+int minijson_parse_str(JsonMap *res, const char *src) {
+    Lexer l;
+    init_lexer(&l, src);
+    int len = parse_map(res, &l);
+
+    if (len != strlen(src)) return -1;
+
+    free_lexer(&l);
+    return len;
+}
+
 void minijson_to_str();

@@ -51,5 +51,5 @@ typedef struct {
 } JsonBaseObj;
 
 const char* minijson_version();
-JsonMap* minijson_parse_str();
+int minijson_parse_str(JsonMap* res, const char* src);
 void minijson_to_str();

@@ -1,10 +1,14 @@
-ALL_O=minijson.o
 CC=gcc
 CFLAGS = -Wall -Wextra -O0 -g
+ALL_O=minijson.o minilexer.o miniutils.o
+
 libminijson.a:$(ALL_O)
 	ar rcs libminijson.a  $^
 
-minijson.o:./minijson.c
+
+minijson.o:minijson.c
+minilexer.o:minilexer.c
+miniutils.o:miniutils.c
 
 .PHONY:test
 clean:

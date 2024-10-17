@@ -1,6 +1,7 @@
 #pragma once
+#include <ctype.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <stdlib.h>
 
 typedef enum {
     JNull,
@@ -27,19 +28,21 @@ typedef struct {
     char* data;
 } JsonStr;
 
+typedef struct JsonBaseObj JsonBaseObj;
+
 typedef struct {
     int length;
-    struct JsonBaseObj* list;
+    JsonBaseObj* list;
 } JsonArray;
 
 typedef struct {
     int len;
     int cap;
-    struct JsonStr* keyList;
-    struct JsonBaseObj* valueList;
+    JsonStr* keyList;
+    JsonBaseObj* valueList;
 } JsonMap;
 
-typedef struct {
+struct JsonBaseObj {
     JsonObjType type;
     union {
         JsonBool jsonBool;
@@ -48,8 +51,19 @@ typedef struct {
         JsonArray jsonArray;
         JsonMap jsonMap;
     };
-} JsonBaseObj;
+};
 
+// basic api
 const char* minijson_version();
-int minijson_parse_str(JsonMap* res, const char* src);
+int minijson_parse_str(JsonMap* res, const char* src, char* err);
 void minijson_to_str();
+
+// JsonNum methods
+int jnum_from_cstr(JsonNum* num, const char* cs, size_t n);
+
+// JsonStr methods
+void init_jstr(JsonStr* str);
+int jstr_cpy(JsonStr* dst, const JsonStr* src);
+int jstr_cpy_cstr(JsonStr* str, const char* cs, int len);
+const char* jstr_cstr(const JsonStr* str);
+int jstr_from_cstr(JsonStr* dst, const char* src);

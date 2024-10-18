@@ -46,6 +46,10 @@ void init_jstr(JsonStr *str) {
     str->data = temp;
 }
 
+void free_jstr(JsonStr *str) {
+    free(str->data);
+}
+
 int jstr_cpy(JsonStr *dst, const JsonStr *src) {
     memcpy(dst, src, sizeof(JsonStr));
     dst->data = malloc(src->cap * sizeof(char));
@@ -55,10 +59,11 @@ int jstr_cpy(JsonStr *dst, const JsonStr *src) {
 
 int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {
     assert(str != NULL);
+    assert(cs != NULL);
     if (str->cap <= len + 1) {
         str->cap = (len + 1) * 2;
 
-        if (str->data != NULL) free(str->data);
+        if (str->cap != 0) free(str->data);
         printf("%s %d: malloc \n", __FILE__, __LINE__);
         str->data = malloc(sizeof(char) * str->cap);
     }
@@ -98,6 +103,7 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
         sprintf(err, "expect 'str'     %10s", l->curStr);
         goto fail;
     }
+    jstr_cpy(&strObj, &lexer_peek(l)->jstr);
     lexer_next(l);
 
     if (!lexer_peek_expect(l, TK_COLON)) {
@@ -108,6 +114,8 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
 
     if (parse_base_obj(&fieldObj, l, err) == 0) goto fail;
 
+    jmap_set(resObj, jstr_cstr(&strObj), fieldObj);
+    free_jstr(&strObj);
     return l->cursor - old;
 
 fail:
@@ -116,16 +124,10 @@ fail:
     return 0;
 }
 
-static int init_json_map(JsonMap *map) {
-    JsonMap temp = { .cap = 0, .len = 0, .keyList = NULL, .valueList = NULL };
-    *map = temp;
-    return 0;
-}
-
-static int parse_map(JsonMap *resObj, Lexer *l, char *err) {
+static int parse_map(JsonMap *map, Lexer *l, char *err) {
     int old = l->cursor;
     JsonMap obj;
-    init_json_map(&obj);
+    init_jmap(&obj);
 
     if (!lexer_peek_expect(l, TK_LBRACE)) {
         sprintf(err, "expect '{'       %10s", l->curStr);
@@ -154,9 +156,11 @@ static int parse_map(JsonMap *resObj, Lexer *l, char *err) {
         lexer_next(l);
     }
 
+    *map = obj;
     return l->cursor - old;
 
 fail:
+    free_jmap(&obj);
     l->cursor = old;
     lexer_peek(l);
     return 0;
@@ -231,6 +235,7 @@ const char *minijson_version() {
 int minijson_parse_str(JsonMap *res, const char *src, char *err) {
     Lexer l;
     init_lexer(&l, src);
+
     int len = parse_map(res, &l, err);
     free_lexer(&l);
     if (len == 0) {

@@ -1,18 +1,18 @@
 #include <stdbool.h>
 #include "minijson.h"
 typedef enum {
-    TError,
-    TNum,
-    TStr,
-    TTrue,
-    TFalse,
-    TNUll,
-    TLBrace,
-    TRBrace,
-    TComma,
-    TColon,
-    TLBracket,
-    TRBracket,
+    TK_ERROR,
+    TK_NUM,
+    TK_STR,
+    TK_TRUE,
+    TK_FALSE,
+    TK_NULL,
+    TK_LBRACE,
+    TK_RBRACE,
+    TK_COMMA,
+    TK_COLON,
+    TK_LBRACKET,
+    TK_RBRACKET,
 } TokenType;
 
 typedef struct {

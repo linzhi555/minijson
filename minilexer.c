@@ -27,27 +27,27 @@ const Token *lexer_peek(Lexer *l) {
     switch (str[0]) {
     case '{':
         len = 1;
-        l->curToken.type = TLBrace;
+        l->curToken.type = TK_LBRACE;
         break;
     case '}':
         len = 1;
-        l->curToken.type = TRBrace;
+        l->curToken.type = TK_RBRACE;
         break;
     case '[':
         len = 1;
-        l->curToken.type = TLBracket;
+        l->curToken.type = TK_LBRACKET;
         break;
     case ']':
         len = 1;
-        l->curToken.type = TRBracket;
+        l->curToken.type = TK_RBRACKET;
         break;
     case ':':
         len = 1;
-        l->curToken.type = TColon;
+        l->curToken.type = TK_COLON;
         break;
     case ',':
         len = 1;
-        l->curToken.type = TComma;
+        l->curToken.type = TK_COMMA;
         break;
     default:
         break;
@@ -56,30 +56,30 @@ const Token *lexer_peek(Lexer *l) {
     if (len != 0) goto finish;
 
     if (strncmp(str, "null", 4) && isspace(str[4])) {
-        l->curToken.type = TNUll;
+        l->curToken.type = TK_NULL;
         len = 4;
     }
 
     if (strncmp(str, "true", 4) && isspace(str[4])) {
-        l->curToken.type = TTrue;
+        l->curToken.type = TK_TRUE;
         len = 4;
     }
 
     if (strncmp(str, "false", 5) && isspace(str[5])) {
-        l->curToken.type = TFalse;
+        l->curToken.type = TK_FALSE;
         len = 5;
     }
 
     len = jnum_from_cstr(&l->curToken.jnum, str, find_space(str) + 1);
     if (len != 0) {
-        l->curToken.type = TNum;
+        l->curToken.type = TK_NUM;
         goto finish;
     }
 
     len = jstr_from_cstr(&l->curToken.jstr, str);
 
     if (len != 0) {
-        l->curToken.type = TStr;
+        l->curToken.type = TK_STR;
         goto finish;
     }
 

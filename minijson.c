@@ -94,13 +94,13 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
     JsonStr strObj;
     JsonBaseObj fieldObj;
 
-    if (!lexer_peek_expect(l, TStr)) {
+    if (!lexer_peek_expect(l, TK_STR)) {
         sprintf(err, "expect 'str'     %10s", l->curStr);
         goto fail;
     }
     lexer_next(l);
 
-    if (!lexer_peek_expect(l, TColon)) {
+    if (!lexer_peek_expect(l, TK_COLON)) {
         sprintf(err, "expect ':'       %10s", l->curStr);
         goto fail;
     }
@@ -127,7 +127,7 @@ static int parse_map(JsonMap *resObj, Lexer *l, char *err) {
     JsonMap obj;
     init_json_map(&obj);
 
-    if (!lexer_peek_expect(l, TLBrace)) {
+    if (!lexer_peek_expect(l, TK_LBRACE)) {
         sprintf(err, "expect '{'       %10s", l->curStr);
         goto fail;
     }
@@ -135,7 +135,7 @@ static int parse_map(JsonMap *resObj, Lexer *l, char *err) {
 
     bool missComma = false;
     while (parse_obj_field(&obj, l, err) != 0) {
-        if (lexer_peek_expect(l, TComma)) {
+        if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
         } else {
             missComma = true;
@@ -147,7 +147,7 @@ static int parse_map(JsonMap *resObj, Lexer *l, char *err) {
         goto fail;
     }
 
-    if (!lexer_peek_expect(l, TRBrace)) {
+    if (!lexer_peek_expect(l, TK_RBRACE)) {
         sprintf(err, "expect '}' at %d      %10s", l->cursor, l->curStr);
         goto fail;
     } else {
@@ -175,13 +175,13 @@ static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err) {
     char nouse[100];
     offset = parse_map(&obj->jsonMap, l, nouse);
     if (offset != 0) {
-        obj->type = JMap;
+        obj->type = JMAP;
         return offset;
     }
 
     offset = parse_array(&obj->jsonArray, l, nouse);
     if (offset != 0) {
-        obj->type = JArray;
+        obj->type = JARRAY;
         return offset;
     }
 
@@ -192,24 +192,24 @@ static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err) {
 
     if (tk != NULL) {
         switch (tk->type) {
-        case TStr:
-            obj->type = JStr;
+        case TK_STR:
+            obj->type = JSTR;
             jstr_cpy(&obj->jsonStr, &tk->jstr);
             break;
-        case TNum:
-            obj->type = JNum;
+        case TK_NUM:
+            obj->type = JNUM;
             obj->jsonNum = tk->jnum;
             break;
-        case TTrue:
-            obj->type = JBool;
+        case TK_TRUE:
+            obj->type = JBOOL;
             obj->jsonBool.data = true;
             break;
-        case TFalse:
-            obj->type = JBool;
+        case TK_FALSE:
+            obj->type = JBOOL;
             obj->jsonBool.data = false;
             break;
-        case TNUll:
-            obj->type = JNull;
+        case TK_NULL:
+            obj->type = JNULL;
             break;
         default:
             goto fail;

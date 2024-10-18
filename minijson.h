@@ -4,12 +4,12 @@
 #include <stdlib.h>
 
 typedef enum {
-    JNull,
-    JBool,
-    JNum,
-    JStr,
-    JArray,
-    JMap,
+    JNULL,
+    JBOOL,
+    JNUM,
+    JSTR,
+    JARRAY,
+    JMAP,
 } JsonObjType;
 
 typedef struct {
@@ -67,3 +67,10 @@ int jstr_cpy(JsonStr* dst, const JsonStr* src);
 int jstr_cpy_cstr(JsonStr* str, const char* cs, int len);
 const char* jstr_cstr(const JsonStr* str);
 int jstr_from_cstr(JsonStr* dst, const char* src);
+
+// JsonArray function
+int jarray_from_cstr(JsonMap* dst, const char src);
+
+// JsonMap function
+int jmap_from_cstr(JsonMap* dst, const char* src);
+int jmap_to_cstr(JsonMap* src, char* dst);

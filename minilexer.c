@@ -55,19 +55,22 @@ const Token *lexer_peek(Lexer *l) {
 
     if (len != 0) goto finish;
 
-    if (strncmp(str, "null", 4) && isspace(str[4])) {
+    if (strncmp(str, "null", 4) == 0 && !isalpha(str[4]) && !isdigit(str[4])) {
         l->curToken.type = TK_NULL;
         len = 4;
+        goto finish;
     }
 
-    if (strncmp(str, "true", 4) && isspace(str[4])) {
+    if (strncmp(str, "true", 4) == 0 && !isalpha(str[4]) && !isdigit(str[4])) {
         l->curToken.type = TK_TRUE;
         len = 4;
+        goto finish;
     }
 
-    if (strncmp(str, "false", 5) && isspace(str[5])) {
+    if (strncmp(str, "false", 5) == 0 && !isalpha(str[5]) && !isdigit(str[5])) {
         l->curToken.type = TK_FALSE;
         len = 5;
+        goto finish;
     }
 
     len = jnum_from_cstr(&l->curToken.jnum, str, find_space(str) + 1);

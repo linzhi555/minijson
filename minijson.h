@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#define ERR_MAX_LEN 100
 typedef enum {
     JNULL,
     JBOOL,

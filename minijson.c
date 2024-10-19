@@ -9,7 +9,7 @@
 #include "minilexer.h"
 #include "miniutils.h"
 
-const int INIT_JSTR_LEN = 100;
+const int INIT_JSTR_LEN = 200;
 
 static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err);
 
@@ -87,7 +87,6 @@ void init_jstr(JsonStr *str) {
     assert(str != NULL);
     str->len = 0;
     str->cap = INIT_JSTR_LEN + 1;
-    printf("%s %d: malloc \n", __FILE__, __LINE__);
     char *temp = malloc(str->cap * sizeof(char));
     str->data = temp;
 }
@@ -110,7 +109,6 @@ int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {
         str->cap = (len + 1) * 2;
 
         if (str->cap != 0) free(str->data);
-        printf("%s %d: malloc \n", __FILE__, __LINE__);
         str->data = malloc(sizeof(char) * str->cap);
     }
 
@@ -146,14 +144,14 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
     JsonBaseObj fieldObj;
 
     if (!lexer_peek_expect(l, TK_STR)) {
-        sprintf(err, "expect 'str'     %10s", l->curStr);
+        snprintf(err, ERR_MAX_LEN, "expect 'str'     %10s", l->curStr);
         goto fail;
     }
     jstr_cpy(&strObj, &lexer_peek(l)->jstr);
     lexer_next(l);
 
     if (!lexer_peek_expect(l, TK_COLON)) {
-        sprintf(err, "expect ':'       %10s", l->curStr);
+        snprintf(err, ERR_MAX_LEN, "expect ':'       %10s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -176,7 +174,8 @@ static int parse_map(JsonMap *map, Lexer *l, char *err) {
     init_jmap(&obj);
 
     if (!lexer_peek_expect(l, TK_LBRACE)) {
-        sprintf(err, "expect '{'       %10s", l->curStr);
+        LOG("len: %ld contents %10s", strlen(l->curStr), l->curStr);
+        snprintf(err, ERR_MAX_LEN, "expect {       %10s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -192,12 +191,12 @@ static int parse_map(JsonMap *map, Lexer *l, char *err) {
     }
 
     if (finishNormally != true) {
-        LOG("stop parse field did  not because miss comma %s", err);
+        LOG("stop parse field did  not because miss comma %10s", err);
         goto fail;
     }
 
     if (!lexer_peek_expect(l, TK_RBRACE)) {
-        sprintf(err, "expect '}' at %d      %10s", l->cursor, l->curStr);
+        snprintf(err, ERR_MAX_LEN, "expect '}' at %d      %10s", l->cursor, l->curStr);
         goto fail;
     } else {
         lexer_next(l);
@@ -223,7 +222,7 @@ fail:
 
 static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err) {
     int offset = 0;
-    char nouse[100];
+    char nouse[ERR_MAX_LEN];
     offset = parse_map(&obj->jsonMap, l, nouse);
     if (offset != 0) {
         obj->type = JMAP;
@@ -271,7 +270,7 @@ static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err) {
     return temp;
 
 fail:
-    sprintf(err, "can not parse base obj at %10s", l->curStr);
+    snprintf(err, ERR_MAX_LEN, "can not parse base obj at %10s", l->curStr);
     return 0;
 }
 

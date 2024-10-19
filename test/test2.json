@@ -1,8 +1,8 @@
 {
     "name":"lll",
-    "age":11,
+    "age": null,
     "physic":{
-        "heigh":11.0,
-        "weight":55.0
+        "h":160.4,
+        "w":44
     }
 }

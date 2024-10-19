@@ -61,7 +61,6 @@ static int jmap_ensure_cap(JsonMap *map, int cap) {
 }
 
 int jmap_set(JsonMap *map, const char *key, JsonBaseObj val) {
-    LOG("set jmap %s\n", key);
     assert(key != NULL);
     assert(map != NULL);
     JsonBaseObj *target = NULL;
@@ -75,14 +74,14 @@ int jmap_set(JsonMap *map, const char *key, JsonBaseObj val) {
 
     if (target == NULL) {
         jmap_ensure_cap(map, map->len + 1);
-        printf("%p\n", map->keyList);
         jstr_cpy_cstr(map->keyList + map->len, key, strlen(key));
         target = &map->valueList[map->len];
         map->len++;
-        printf("map len%d \n", map->len);
     }
 
     *target = val;
+
+    LOG("set %s %d , now map len:%d\n", key, val.type, map->len);
     return 0;
 }
 

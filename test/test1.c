@@ -2,28 +2,26 @@
 #include <stdlib.h>
 #include "minijson.h"
 
-const char* str1 = "{\"age\":11 , \"height\": 55.2, \"name\":\"cisbest\", \"id\":\"1001\"} ";
+#define MAX_SIZE 10240  // 定义数组的最大大小
+char buffer[MAX_SIZE] = { 0 };
 
-#define MAX_SIZE 1024  // 定义数组的最大大小
-char str2[MAX_SIZE] = { 0 };
-
-int read_test_files() {
+int read_test_files(const char* filename) {
     FILE* file;
     size_t bytesRead;
 
     // 打开文件
-    file = fopen("test.json", "r");
+    file = fopen(filename, "r");
     if (file == NULL) {
         perror("无法打开文件");
         return -1;
     }
 
     // 读取文件内容到数组
-    bytesRead = fread(str2, sizeof(char), MAX_SIZE - 1, file);
-    str2[bytesRead] = '\0';  // 确保字符串以 null 结尾
+    bytesRead = fread(buffer, sizeof(char), MAX_SIZE - 1, file);
+    buffer[bytesRead] = '\0';  // 确保字符串以 null 结尾
 
     // 输出读取的内容
-    printf("读取的内容:\n%s\n", str2);
+    printf("读取的内容:\n%s\n", buffer);
 
     // 关闭文件
     fclose(file);
@@ -49,14 +47,19 @@ final:
     return ret;
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        fprintf(stderr, "usage test xxx.json");
+    }
+    char* filename = argv[1];
+
     printf("-----test1 start----\n");
     printf("minijson version :%s\n", minijson_version());
-    // test_str_json(str1);
-    if (read_test_files()) {
+
+    if (read_test_files(filename)) {
         printf("json file test fail");
         return EXIT_FAILURE;
     }
-    test_str_json(str2);
+    test_str_json(buffer);
     return EXIT_SUCCESS;
 }

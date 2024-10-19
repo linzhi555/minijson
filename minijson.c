@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,26 +15,71 @@ static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err);
 
 // parse the char* to JsonNum
 int jnum_from_cstr(JsonNum *num, const char *cs, size_t n) {
-    int64_t intRes;
-    double floatRes;
+    int64_t ipart = 0;  // interger part 11.000203 's ipart is 11
+    int64_t fpart = 0;  // float part , 11.000203 's fpart is 203
+    int64_t dot0s = 0;  // zero nums after dot, 11.000203 's dot0s is 3
 
-    int preEmpty = skip_space(cs);
-    cs += preEmpty;
+    char state = 's';  // s : start, i : interger , d: dot, f:float
+    size_t i;
+    for (i = 0; i < n; i++) {
+        char c = cs[i];
+        if (state == 's') {
+            if (isspace(c)) continue;
+            if (!isdigit(c)) goto fail;
+            ipart = c - '0';
+            state = 'i';
+            continue;
+        }
 
-    int res = sscanf(cs, "%ld", &intRes);
-    if (res != 0) {
+        else if (state == 'i') {
+            if (c == '.') {
+                state = 'd';
+                continue;
+            }
+            if (!isdigit(c)) break;
+            ipart *= 10;
+            ipart += c - '0';
+            continue;
+        }
+
+        else if (state == 'd') {
+            if (c == '0') {
+                dot0s++;
+                continue;
+            } else if (isdigit(c)) {
+                state = 'f';
+                fpart = c - '0';
+                continue;
+            }
+            break;
+        }
+
+        else if (state == 'f') {
+            if (!isdigit(c)) break;
+            fpart *= 10;
+            fpart += c - '0';
+            continue;
+        }
+    }
+
+    if (state == 'i') {
         num->isInt = true;
-        num->Double = intRes;
-        return n;
-    }
-
-    res = sscanf(cs, "%lf", &floatRes);
-    if (res != 0) {
+        num->Int64 = ipart;
+    } else if (state == 'f' || (state == 'd' && dot0s > 0)) {
         num->isInt = false;
-        num->Double = floatRes;
-        return n;
+        num->Double = ipart;
+        int fpartlen = 0;
+        for (size_t temp = fpart; temp != 0; temp /= 10) fpartlen++;
+        double res = fpart;
+        for (int i = 0; i < dot0s + fpartlen; i++) {
+            res /= 10;
+        }
+        num->Double += res;
+    } else {
+        goto fail;
     }
-
+    return i;
+fail:
     return 0;
 }
 
@@ -135,16 +181,17 @@ static int parse_map(JsonMap *map, Lexer *l, char *err) {
     }
     lexer_next(l);
 
-    bool missComma = false;
+    bool finishNormally = false;
     while (parse_obj_field(&obj, l, err) != 0) {
         if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
         } else {
-            missComma = true;
+            finishNormally = true;
+            break;
         }
     }
 
-    if (missComma != true) {
+    if (finishNormally != true) {
         LOG("stop parse field did  not because miss comma %s", err);
         goto fail;
     }

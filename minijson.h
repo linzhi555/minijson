@@ -58,7 +58,10 @@ struct JsonBaseObj {
 
 // basic api
 const char* minijson_version();
+// TODO: use minijsong instead
 int minijson_parse_str(JsonMap* res, const char* src, char* err);
+
+// TODO: implement
 void minijson_to_str();
 
 // JsonNull methods

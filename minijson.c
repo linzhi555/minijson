@@ -180,6 +180,7 @@ static int parse_map(JsonMap *dst, Lexer *l, char *err) {
     }
     lexer_next(l);
 
+    //TODO: need to fix parse right when tail comma existed
     while (parse_obj_field(&obj, l, err) != 0) {
         if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
@@ -215,6 +216,7 @@ static int parse_array(JsonArray *dst, Lexer *l, char *err) {
 
     JsonBaseObj obj;
 
+    //TODO: need to fix parse right when tail comma existed
     while (parse_base_obj(&obj, l, err) != 0) {
         jarray_append(&array, obj);
         if (lexer_peek_expect(l, TK_COMMA)) {

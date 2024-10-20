@@ -1,0 +1,18 @@
+{
+  "arguments": [
+    "/usr/bin/gcc",
+    "-c",
+    "-Wall",
+    "-Wextra",
+    "-O0",
+    "-g",
+    "-I../",
+    "-o",
+    "test1",
+    "test1.c"
+  ],
+  "directory": "/home/lin/dev/minijson/test",
+  "file": "/home/lin/dev/minijson/test/test1.c",
+  "output": "/home/lin/dev/minijson/test/test1"
+}
+

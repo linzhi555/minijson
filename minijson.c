@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,18 +164,17 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
     return l->cursor - old;
 
 fail:
-    l->cursor = old;
-    lexer_peek(l);
+    lexer_set(l, old);
     return 0;
 }
 
-static int parse_map(JsonMap *map, Lexer *l, char *err) {
+static int parse_map(JsonMap *dst, Lexer *l, char *err) {
     int old = l->cursor;
     JsonMap obj;
     init_jmap(&obj);
 
     if (!lexer_peek_expect(l, TK_LBRACE)) {
-        LOG("len: %ld contents %10s", strlen(l->curStr), l->curStr);
+        LOG("len: %ld contents %.10s", strlen(l->curStr), l->curStr);
         snprintf(err, ERR_MAX_LEN, "expect {       %10s", l->curStr);
         goto fail;
     }
@@ -191,32 +191,62 @@ static int parse_map(JsonMap *map, Lexer *l, char *err) {
     }
 
     if (finishNormally != true) {
-        LOG("stop parse field did  not because miss comma %10s", err);
         goto fail;
     }
 
     if (!lexer_peek_expect(l, TK_RBRACE)) {
         snprintf(err, ERR_MAX_LEN, "expect '}' at %d      %10s", l->cursor, l->curStr);
         goto fail;
-    } else {
-        lexer_next(l);
     }
+    lexer_next(l);
 
-    *map = obj;
+    *dst = obj;
     return l->cursor - old;
 
 fail:
     free_jmap(&obj);
-    l->cursor = old;
-    lexer_peek(l);
+    lexer_set(l, old);
     return 0;
 }
 
-static int parse_array(JsonArray *resObj, Lexer *l, char *err) {
+static int parse_array(JsonArray *dst, Lexer *l, char *err) {
     int old = l->cursor;
+    JsonArray array;
+    init_jarray(&array);
+    if (!lexer_peek_expect(l, TK_LBRACKET)) {
+        snprintf(err, ERR_MAX_LEN, "expect [       %10s", l->curStr);
+        goto fail;
+    }
+    lexer_next(l);
+
+    JsonBaseObj obj;
+    bool finishNormally = false;
+    while (parse_base_obj(&obj, l, err) != 0) {
+        jarray_append(&array, obj);
+        if (lexer_peek_expect(l, TK_COMMA)) {
+            lexer_next(l);
+        } else {
+            finishNormally = true;
+            break;
+        }
+    }
+
+    if (finishNormally != true) {
+        goto fail;
+    }
+
+    if (!lexer_peek_expect(l, TK_RBRACKET)) {
+        snprintf(err, ERR_MAX_LEN, "expect ']' at %d      %10s", l->cursor, l->curStr);
+        goto fail;
+    }
+    lexer_next(l);
+
+    // success:
+    *dst = array;
+    return l->cursor - old;
 fail:
-    l->cursor = old;
-    lexer_peek(l);
+    free_jarry(&array);
+    lexer_set(l, old);
     return 0;
 }
 

@@ -27,7 +27,7 @@ int free_jmap(JsonMap *map) {
             free_jstr(&v->jsonStr);
             break;
         case JARRAY:
-            assert("jarray free is not implemented" == NULL);
+            free_jarry(&v->jsonArray);
             break;
         default:
             break;
@@ -90,42 +90,47 @@ int jmap_set_int(JsonMap *map, const char *key, size_t val);
 int jmap_set_float(JsonMap *map, const char *key, double val);
 int jmap_set_bool(JsonMap *map, const char *key, bool val);
 
-int jmap_debug(const JsonMap *map) {
+void jmap_debug(const JsonMap *map) {
     printf("{\n");
     for (int i = 0; i < map->len; i++) {
         const JsonBaseObj *v = &map->valueList[i];
         const JsonStr *k = &map->keyList[i];
         printf("  key: %s ", jstr_cstr(k));
         printf("  value: ");
-        switch (v->type) {
-        case JSTR:
-            printf("%s", jstr_cstr(&v->jsonStr));
-            break;
-        case JNULL:
-            printf("null");
-            break;
-        case JNUM:
-            if (v->jsonNum.isInt) {
-                printf("%ld i", v->jsonNum.Int64);
-            } else {
-                printf("%lf f", v->jsonNum.Double);
-            }
-
-            break;
-        case JBOOL:
-            if (v->jsonBool.data) {
-                printf("true");
-            } else {
-                printf("false");
-            }
-        case JARRAY:
-            break;
-        case JMAP:
-            jmap_debug(&v->jsonMap);
-            break;
-        }
+        jbaseobj_debug(v);
         printf("\n");
     }
     printf("}\n");
-    return 0;
+}
+
+void jbaseobj_debug(const JsonBaseObj *v) {
+    switch (v->type) {
+    case JSTR:
+        printf("%s", jstr_cstr(&v->jsonStr));
+        break;
+    case JNULL:
+        printf("null");
+        break;
+    case JNUM:
+        if (v->jsonNum.isInt) {
+            printf("%ld i", v->jsonNum.Int64);
+        } else {
+            printf("%lf f", v->jsonNum.Double);
+        }
+
+        break;
+    case JBOOL:
+        if (v->jsonBool.data) {
+            printf("true");
+        } else {
+            printf("false");
+        }
+        break;
+    case JARRAY:
+        jarray_debug(&v->jsonArray);
+        break;
+    case JMAP:
+        jmap_debug(&v->jsonMap);
+        break;
+    }
 }

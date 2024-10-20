@@ -180,18 +180,12 @@ static int parse_map(JsonMap *dst, Lexer *l, char *err) {
     }
     lexer_next(l);
 
-    bool finishNormally = false;
     while (parse_obj_field(&obj, l, err) != 0) {
         if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
         } else {
-            finishNormally = true;
             break;
         }
-    }
-
-    if (finishNormally != true) {
-        goto fail;
     }
 
     if (!lexer_peek_expect(l, TK_RBRACE)) {
@@ -220,19 +214,14 @@ static int parse_array(JsonArray *dst, Lexer *l, char *err) {
     lexer_next(l);
 
     JsonBaseObj obj;
-    bool finishNormally = false;
+
     while (parse_base_obj(&obj, l, err) != 0) {
         jarray_append(&array, obj);
         if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
         } else {
-            finishNormally = true;
             break;
         }
-    }
-
-    if (finishNormally != true) {
-        goto fail;
     }
 
     if (!lexer_peek_expect(l, TK_RBRACKET)) {

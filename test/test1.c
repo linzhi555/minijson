@@ -1,9 +1,34 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "minijson.h"
 
 #define MAX_SIZE 10240  // 定义数组的最大大小
 char buffer[MAX_SIZE] = { 0 };
+
+char files[10][1000] = { 0 };
+int filenum = 0;
+
+int scan_json_file(char* dirpath) {
+    struct dirent* entry;
+    DIR* dp = opendir(dirpath);
+
+    if (dp == NULL) {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+
+    while ((entry = readdir(dp)) != NULL) {
+        // 排除 . 和 .. 目录
+        if (entry->d_name[0] != '.') {
+            sprintf(files[filenum], "%s/%s", dirpath, entry->d_name);
+            filenum++;
+        }
+    }
+
+    closedir(dp);
+    return EXIT_SUCCESS;
+}
 
 int read_test_files(const char* filename) {
     FILE* file;
@@ -13,7 +38,7 @@ int read_test_files(const char* filename) {
     file = fopen(filename, "r");
     if (file == NULL) {
         perror("无法打开文件");
-        return -1;
+        return 0;
     }
 
     // 读取文件内容到数组
@@ -25,7 +50,7 @@ int read_test_files(const char* filename) {
 
     // 关闭文件
     fclose(file);
-    return 0;
+    return bytesRead;
 }
 
 int test_str_json(const char* str) {
@@ -47,19 +72,21 @@ final:
     return ret;
 }
 
-int main(int argc, char** argv) {
-    if (argc < 2) {
-        fprintf(stderr, "usage test xxx.json");
-    }
-    char* filename = argv[1];
-
+int main() {
     printf("-----test1 start----\n");
     printf("minijson version :%s\n", minijson_version());
 
-    if (read_test_files(filename)) {
-        printf("json file test fail");
-        return EXIT_FAILURE;
+    scan_json_file("./jsons");
+
+    for (int i = 0; i < filenum; i++) {
+        const char* filename = files[i];
+        printf("%s\n", filename);
+        if (read_test_files(filename) == 0) {
+            printf("json file test fail");
+            return EXIT_FAILURE;
+        }
+        test_str_json(buffer);
     }
-    test_str_json(buffer);
+
     return EXIT_SUCCESS;
 }

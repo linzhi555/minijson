@@ -41,7 +41,7 @@ int test_str_json(const char* str) {
     } else {
         printf("parse succcess\n");
     }
-    jmap_debug(&jmap);
+    jmap_debug(&jmap, 0);
 final:
     free_jmap(&jmap);
     return ret;

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "minijson.h"
+#include "miniutils.h"
 void init_jarray(JsonArray* dst) {
     dst->cap = 0;
     dst->len = 0;
@@ -43,13 +44,14 @@ int jarray_delete(JsonArray* array, int index) {
     return 0;
 }
 
-void jarray_debug(const JsonArray* array) {
-    printf("[");
+void jarray_debug(const JsonArray* array, int indent) {
+    printf("%s[\n", nspace(2 * indent));
     for (int i = 0; i < array->len; i++) {
-        jbaseobj_debug(&array->list[i]);
-        printf("   ");
+        printf("%s", nspace(2 * (indent + 1)));
+        jbaseobj_debug(&array->list[i], indent);
+        printf("\n");
     }
-    printf("]\n");
+    printf("%s]\n", nspace(2 * indent));
 }
 
 // int jarray_insert(JsonArray* array, JsonBaseObj newobj) {

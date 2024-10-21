@@ -90,20 +90,20 @@ int jmap_set_int(JsonMap *map, const char *key, size_t val);
 int jmap_set_float(JsonMap *map, const char *key, double val);
 int jmap_set_bool(JsonMap *map, const char *key, bool val);
 
-void jmap_debug(const JsonMap *map) {
+void jmap_debug(const JsonMap *map, int indent) {
     printf("{\n");
     for (int i = 0; i < map->len; i++) {
         const JsonBaseObj *v = &map->valueList[i];
         const JsonStr *k = &map->keyList[i];
-        printf("  key: %s ", jstr_cstr(k));
-        printf("  value: ");
-        jbaseobj_debug(v);
+        printf("%skey: %s ", nspace(2 * (indent + 1)), jstr_cstr(k));
+        printf("%svalue: ", nspace(2 * (indent + 1)));
+        jbaseobj_debug(v, indent);
         printf("\n");
     }
-    printf("}\n");
+    printf("%s}\n", nspace(2 * indent));
 }
 
-void jbaseobj_debug(const JsonBaseObj *v) {
+void jbaseobj_debug(const JsonBaseObj *v, int indent) {
     switch (v->type) {
     case JSTR:
         printf("%s", jstr_cstr(&v->jsonStr));
@@ -127,10 +127,10 @@ void jbaseobj_debug(const JsonBaseObj *v) {
         }
         break;
     case JARRAY:
-        jarray_debug(&v->jsonArray);
+        jarray_debug(&v->jsonArray, indent + 1);
         break;
     case JMAP:
-        jmap_debug(&v->jsonMap);
+        jmap_debug(&v->jsonMap, indent + 1);
         break;
     }
 }

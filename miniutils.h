@@ -8,3 +8,6 @@
 
 int skip_space(const char *cs);
 int find_space(const char *cs);
+
+// return a const char* of n ' ', n < 255
+const char *nspace(int n);

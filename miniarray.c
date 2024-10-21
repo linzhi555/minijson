@@ -21,18 +21,18 @@ void free_jarry(JsonArray* dst) {
 int ensure_cap(JsonArray* array, int newcap) {
     if (array->cap >= newcap) return array->cap;
     array->cap = newcap * 2;
-    array->list = realloc(array->list, array->cap * sizeof(JsonBaseObj));
+    array->list = realloc(array->list, array->cap * sizeof(JsonValue));
     return array->cap;
 }
 
-int jarray_append(JsonArray* array, JsonBaseObj newobj) {
+int jarray_append(JsonArray* array, JsonValue newobj) {
     ensure_cap(array, array->len + 1);
     array->list[array->len] = newobj;
     array->len++;
     return array->len;
 }
 
-JsonBaseObj* jarray_get(JsonArray* array, int index) {
+JsonValue* jarray_get(JsonArray* array, int index) {
     if (array->len - 1 < index) return NULL;
     return &array->list[index];
 }
@@ -48,12 +48,12 @@ void jarray_debug(const JsonArray* array, int indent) {
     printf("%s[\n", nspace(2 * indent));
     for (int i = 0; i < array->len; i++) {
         printf("%s", nspace(2 * (indent + 1)));
-        jbaseobj_debug(&array->list[i], indent);
+        jvalue_debug(&array->list[i], indent);
         printf("\n");
     }
     printf("%s]\n", nspace(2 * indent));
 }
 
-// int jarray_insert(JsonArray* array, JsonBaseObj newobj) {
+// int jarray_insert(JsonArray* array, JsonValue newobj) {
 //     assert("not impleted!" == NULL);
 // }

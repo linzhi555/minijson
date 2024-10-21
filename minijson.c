@@ -12,7 +12,7 @@
 
 const int INIT_JSTR_LEN = 200;
 
-static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err);
+static int parse_base_obj(JsonValue *obj, Lexer *l, char *err);
 
 // parse the char* to JsonNum
 int jnum_from_cstr(JsonNum *num, const char *cs, size_t n) {
@@ -142,7 +142,7 @@ int jstr_from_cstr(JsonStr *dst, const char *src) {
 static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
     int old = l->cursor;
     JsonStr strObj;
-    JsonBaseObj fieldObj;
+    JsonValue fieldObj;
 
     if (!lexer_peek_expect(l, TK_STR)) {
         snprintf(err, ERR_MAX_LEN, "expect 'str'     %10s", l->curStr);
@@ -214,7 +214,7 @@ static int parse_array(JsonArray *dst, Lexer *l, char *err) {
     }
     lexer_next(l);
 
-    JsonBaseObj obj;
+    JsonValue obj;
 
     //TODO: need to fix parse right when tail comma existed
     while (parse_base_obj(&obj, l, err) != 0) {
@@ -241,7 +241,7 @@ fail:
     return 0;
 }
 
-static int parse_base_obj(JsonBaseObj *obj, Lexer *l, char *err) {
+static int parse_base_obj(JsonValue *obj, Lexer *l, char *err) {
     int offset = 0;
     char nouse[ERR_MAX_LEN];
     offset = parse_map(&obj->jsonMap, l, nouse);

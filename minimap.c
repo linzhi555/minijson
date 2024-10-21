@@ -17,7 +17,7 @@ int init_jmap(JsonMap *map) {
 int free_jmap(JsonMap *map) {
     for (int i = 0; i < map->len; i++) {
         JsonStr *k = &map->keyList[i];
-        JsonBaseObj *v = &map->valueList[i];
+        JsonValue *v = &map->valueList[i];
         free_jstr(k);
         switch (v->type) {
         case JMAP:
@@ -47,7 +47,7 @@ static int jmap_ensure_cap(JsonMap *map, int cap) {
     }
 
     map->keyList = realloc(map->keyList, cap * 2 * sizeof(JsonStr));
-    map->valueList = realloc(map->valueList, cap * 2 * sizeof(JsonBaseObj));
+    map->valueList = realloc(map->valueList, cap * 2 * sizeof(JsonValue));
 
     assert(map->keyList);
     assert(map->valueList);
@@ -60,12 +60,12 @@ static int jmap_ensure_cap(JsonMap *map, int cap) {
     return map->cap;
 }
 
-int jmap_set(JsonMap *map, const char *key, JsonBaseObj val) {
+int jmap_set(JsonMap *map, const char *key, JsonValue val) {
     assert(key != NULL);
     assert(map != NULL);
-    JsonBaseObj *target = NULL;
+    JsonValue *target = NULL;
     for (int i = 0; i < map->len; i++) {
-        JsonBaseObj *v = &map->valueList[i];
+        JsonValue *v = &map->valueList[i];
         JsonStr *k = &map->keyList[i];
         if (strcmp(key, jstr_cstr(k)) == 0) {
             target = v;
@@ -93,17 +93,17 @@ int jmap_set_bool(JsonMap *map, const char *key, bool val);
 void jmap_debug(const JsonMap *map, int indent) {
     printf("{\n");
     for (int i = 0; i < map->len; i++) {
-        const JsonBaseObj *v = &map->valueList[i];
+        const JsonValue *v = &map->valueList[i];
         const JsonStr *k = &map->keyList[i];
         printf("%skey: %s ", nspace(2 * (indent + 1)), jstr_cstr(k));
         printf("%svalue: ", nspace(2 * (indent + 1)));
-        jbaseobj_debug(v, indent);
+        jvalue_debug(v, indent);
         printf("\n");
     }
     printf("%s}\n", nspace(2 * indent));
 }
 
-void jbaseobj_debug(const JsonBaseObj *v, int indent) {
+void jvalue_debug(const JsonValue *v, int indent) {
     switch (v->type) {
     case JSTR:
         printf("%s", jstr_cstr(&v->jsonStr));

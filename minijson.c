@@ -10,134 +10,7 @@
 #include "minilexer.h"
 #include "miniutils.h"
 
-const int INIT_JSTR_LEN = 200;
-
 static int parse_base_obj(JsonValue *obj, Lexer *l, char *err);
-
-// parse the char* to JsonNum
-int jnum_from_cstr(JsonNum *num, const char *cs, size_t n) {
-    int64_t ipart = 0;  // interger part 11.000203 's ipart is 11
-    int64_t fpart = 0;  // float part , 11.000203 's fpart is 203
-    int64_t dot0s = 0;  // zero nums after dot, 11.000203 's dot0s is 3
-
-    char state = 's';  // s : start, i : interger , d: dot, f:float
-    size_t i;
-    for (i = 0; i < n; i++) {
-        char c = cs[i];
-        if (state == 's') {
-            if (isspace(c)) continue;
-            if (!isdigit(c)) goto fail;
-            ipart = c - '0';
-            state = 'i';
-            continue;
-        }
-
-        else if (state == 'i') {
-            if (c == '.') {
-                state = 'd';
-                continue;
-            }
-            if (!isdigit(c)) break;
-            ipart *= 10;
-            ipart += c - '0';
-            continue;
-        }
-
-        else if (state == 'd') {
-            if (c == '0') {
-                dot0s++;
-                continue;
-            } else if (isdigit(c)) {
-                state = 'f';
-                fpart = c - '0';
-                continue;
-            }
-            break;
-        }
-
-        else if (state == 'f') {
-            if (!isdigit(c)) break;
-            fpart *= 10;
-            fpart += c - '0';
-            continue;
-        }
-    }
-
-    if (state == 'i') {
-        num->isInt = true;
-        num->Int64 = ipart;
-    } else if (state == 'f' || (state == 'd' && dot0s > 0)) {
-        num->isInt = false;
-        num->Double = ipart;
-        int fpartlen = 0;
-        for (size_t temp = fpart; temp != 0; temp /= 10) fpartlen++;
-        double res = fpart;
-        for (int i = 0; i < dot0s + fpartlen; i++) {
-            res /= 10;
-        }
-        num->Double += res;
-    } else {
-        goto fail;
-    }
-    return i;
-fail:
-    return 0;
-}
-
-void init_jstr(JsonStr *str) {
-    assert(str != NULL);
-    str->len = 0;
-    str->cap = INIT_JSTR_LEN + 1;
-    char *temp = malloc(str->cap * sizeof(char));
-    str->data = temp;
-}
-
-void free_jstr(JsonStr *str) {
-    free(str->data);
-}
-
-int jstr_cpy(JsonStr *dst, const JsonStr *src) {
-    memcpy(dst, src, sizeof(JsonStr));
-    dst->data = malloc(src->cap * sizeof(char));
-    memcpy(dst->data, src->data, src->cap);
-    return dst->len;
-}
-
-int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {
-    assert(str != NULL);
-    assert(cs != NULL);
-    if (str->cap <= len + 1) {
-        str->cap = (len + 1) * 2;
-
-        if (str->cap != 0) free(str->data);
-        str->data = malloc(sizeof(char) * str->cap);
-    }
-
-    strncpy(str->data, cs, len);
-    str->data[len] = '\0';
-    str->len = len;
-
-    return len;
-}
-
-const char *jstr_cstr(const JsonStr *str) {
-    return str->data;
-}
-
-int jstr_from_cstr(JsonStr *dst, const char *src) {
-    if (src[0] != '\"') return 0;
-    for (int i = 1; src[i] != '\0'; i++) {
-        if (src[i] == '\\' && src[i + 1] != '\0') {
-            i++;
-            continue;
-        }
-        if (src[i] == '"') {
-            jstr_cpy_cstr(dst, src + 1, i - 1);
-            return i + 1;
-        }
-    }
-    return 0;
-}
 
 static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
     int old = l->cursor;
@@ -180,7 +53,7 @@ static int parse_map(JsonMap *dst, Lexer *l, char *err) {
     }
     lexer_next(l);
 
-    //TODO: need to fix parse right when tail comma existed
+    // TODO: need to fix parse right when tail comma existed
     while (parse_obj_field(&obj, l, err) != 0) {
         if (lexer_peek_expect(l, TK_COMMA)) {
             lexer_next(l);
@@ -216,7 +89,7 @@ static int parse_array(JsonArray *dst, Lexer *l, char *err) {
 
     JsonValue obj;
 
-    //TODO: need to fix parse right when tail comma existed
+    // TODO: need to fix parse right when tail comma existed
     while (parse_base_obj(&obj, l, err) != 0) {
         jarray_append(&array, obj);
         if (lexer_peek_expect(l, TK_COMMA)) {

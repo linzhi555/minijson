@@ -18,7 +18,7 @@ void free_jarry(JsonArray* dst) {
     dst->cap = 0;
 }
 
-int ensure_cap(JsonArray* array, int newcap) {
+static int jarray_ensure_cap(JsonArray* array, int newcap) {
     if (array->cap >= newcap) return array->cap;
     array->cap = newcap * 2;
     array->list = realloc(array->list, array->cap * sizeof(JsonValue));
@@ -26,7 +26,7 @@ int ensure_cap(JsonArray* array, int newcap) {
 }
 
 int jarray_append(JsonArray* array, JsonValue newobj) {
-    ensure_cap(array, array->len + 1);
+    jarray_ensure_cap(array, array->len + 1);
     array->list[array->len] = newobj;
     array->len++;
     return array->len;
@@ -44,11 +44,11 @@ int jarray_delete(JsonArray* array, int index) {
     return 0;
 }
 
-void jarray_debug(const JsonArray* array, int indent) {
+void jarray_output(const JsonArray* array, int indent) {
     printf("%s[\n", nspace(2 * indent));
     for (int i = 0; i < array->len; i++) {
         printf("%s", nspace(2 * (indent + 1)));
-        jvalue_debug(&array->list[i], indent);
+        jvalue_output(&array->list[i], indent);
         printf("\n");
     }
     printf("%s]\n", nspace(2 * indent));

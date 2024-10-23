@@ -70,6 +70,7 @@ int test_str_json(const char* str) {
     }
     jmap_output(&jmap, 0);
 final:
+    free_jstr(&err);
     free_jmap(&jmap);
     return ret;
 }

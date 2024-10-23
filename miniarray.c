@@ -44,14 +44,14 @@ int jarray_delete(JsonArray* array, int index) {
     return 0;
 }
 
-void jarray_output(const JsonArray* array, int indent) {
-    printf("%s[\n", nspace(2 * indent));
+void jarray_output(JsonStr* dist, const JsonArray* array, int indent) {
+    jstr_sprintf_back(dist, "%s[\n", nspace(2 * indent));
     for (int i = 0; i < array->len; i++) {
-        printf("%s", nspace(2 * (indent + 1)));
-        jvalue_output(&array->list[i], indent);
-        printf("\n");
+        jstr_sprintf_back(dist, "%s", nspace(2 * (indent + 1)));
+        jvalue_output(dist, &array->list[i], indent);
+        jstr_sprintf_back(dist, "\n");
     }
-    printf("%s]\n", nspace(2 * indent));
+    jstr_sprintf_back(dist, "%s]\n", nspace(2 * indent));
 }
 
 // int jarray_insert(JsonArray* array, JsonValue newobj) {

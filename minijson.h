@@ -97,7 +97,8 @@ int jnum_from_cstr(JsonNum* num, const char* cs, size_t n);
 // JsonStr methods
 void init_jstr(JsonStr* str);
 void free_jstr(JsonStr* dst);
-int jstr_sprintf(JsonStr* str, const char* format, ...);
+int jstr_sprintf(JsonStr* dst, const char* format, ...);
+int jstr_sprintf_back(JsonStr* dst, const char* format, ...);
 int jstr_cpy(JsonStr* dst, const JsonStr* src);
 int jstr_cpy_cstr(JsonStr* str, const char* cs, int len);
 const char* jstr_cstr(const JsonStr* str);
@@ -106,19 +107,18 @@ int jstr_from_cstr(JsonStr* dst, const char* src);
 // JsonArray function
 void init_jarray(JsonArray* dst);
 void free_jarry(JsonArray* dst);
-void jarray_output(const JsonArray* array, int indent);
 int jarray_from_cstr(JsonArray* dst, const char src, JsonStr* err);
 int jarray_append(JsonArray* array, JsonValue newobj);
 int jarray_insert(JsonArray* array, JsonValue newobj);
 int jarray_delete(JsonArray* array, int index);
 JsonValue* jarray_get(JsonArray* map, int index);
+void jarray_output(JsonStr* dist, const JsonArray* array, int indent);
 
 // JsonMap methods
 int init_jmap(JsonMap* dst);
 int free_jmap(JsonMap* dst);
 int jmap_from_cstr(JsonMap* dst, const char* src, JsonStr* err);
 int jmap_to_cstr(const JsonMap* src, char* dst);
-void jmap_output(const JsonMap* src, int indent);
 int jmap_set(JsonMap* map, const char* key, JsonValue val);
 int jmap_set_str(JsonMap* map, const char* key, const char* val);
 int jmap_set_int(JsonMap* map, const char* key, size_t val);
@@ -126,6 +126,7 @@ int jmap_set_float(JsonMap* map, const char* key, double val);
 int jmap_set_bool(JsonMap* map, const char* key, bool val);
 JsonValue* jmap_get(JsonMap* map, const char* key);
 int* jmap_delete(JsonMap* map, const char* key);
+void jmap_output(JsonStr* dist, const JsonMap* src, int indent);
 
 // JsonValue methods
-void jvalue_output(const JsonValue* v, int indent);
+void jvalue_output(JsonStr* dist, const JsonValue* v, int indent);

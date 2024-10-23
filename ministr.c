@@ -36,23 +36,45 @@ int jstr_cpy(JsonStr *dst, const JsonStr *src) {
     return dst->len;
 }
 
-int jstr_sprintf(JsonStr *str, const char *format, ...) {
+int jstr_sprintf(JsonStr *dst, const char *format, ...) {
+    assert(dst != NULL);
+    assert(format != NULL);
+
     va_list args, args_copy;
     va_start(args, format);
     va_copy(args_copy, args);
 
-    int len = vsnprintf(NULL, 0, format, args) + 1;
+    int len = vsnprintf(NULL, 0, format, args);
     char *temp = calloc(len + 1, sizeof(char));
     vsnprintf(temp, len + 1, format, args_copy);
-    str->cap = len + 1;
-    str->len = len;
-    free(str->data);
-    str->data = temp;
+    dst->cap = len + 1;
+    dst->len = len;
+    free(dst->data);
+    dst->data = temp;
 
     va_end(args_copy);
     va_end(args);
 
-    return str->len;
+    return dst->len;
+}
+
+int jstr_sprintf_back(JsonStr *dst, const char *format, ...) {
+    assert(dst != NULL);
+    assert(format != NULL);
+
+    va_list args, args_copy;
+    va_start(args, format);
+    va_copy(args_copy, args);
+
+    int len = vsnprintf(NULL, 0, format, args);
+    jstr_ensure_cap(dst, dst->len + len + 1);
+    vsnprintf(&dst->data[dst->len], len + 1, format, args_copy);
+    dst->len += len;
+
+    va_end(args_copy);
+    va_end(args);
+
+    return dst->len;
 }
 
 int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {

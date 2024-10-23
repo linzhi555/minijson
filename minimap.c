@@ -90,47 +90,50 @@ int jmap_set_int(JsonMap *map, const char *key, size_t val);
 int jmap_set_float(JsonMap *map, const char *key, double val);
 int jmap_set_bool(JsonMap *map, const char *key, bool val);
 
-void jmap_output(const JsonMap *map, int indent) {
-    printf("{\n");
+void jmap_output(JsonStr *dist, const JsonMap *map, int indent) {
+    assert(dist != NULL);
+    assert(map != NULL);
+
+    jstr_sprintf_back(dist, "{\n");
     for (int i = 0; i < map->len; i++) {
         const JsonValue *v = &map->valueList[i];
         const JsonStr *k = &map->keyList[i];
-        printf("%skey: %s ", nspace(2 * (indent + 1)), jstr_cstr(k));
-        printf("%svalue: ", nspace(2 * (indent + 1)));
-        jvalue_output(v, indent);
-        printf("\n");
+        jstr_sprintf_back(dist, "%skey: %s ", nspace(2 * (indent + 1)), jstr_cstr(k));
+        jstr_sprintf_back(dist, "%svalue: ", nspace(2 * (indent + 1)));
+        jvalue_output(dist, v, indent);
+        jstr_sprintf_back(dist, "\n");
     }
-    printf("%s}\n", nspace(2 * indent));
+    jstr_sprintf_back(dist, "%s}\n", nspace(2 * indent));
 }
 
-void jvalue_output(const JsonValue *v, int indent) {
+void jvalue_output(JsonStr *dist, const JsonValue *v, int indent) {
     switch (v->type) {
     case JSTR:
-        printf("%s", jstr_cstr(&v->jsonStr));
+        jstr_sprintf_back(dist, "%s", jstr_cstr(&v->jsonStr));
         break;
     case JNULL:
-        printf("null");
+        jstr_sprintf_back(dist, "null");
         break;
     case JNUM:
         if (v->jsonNum.isInt) {
-            printf("%ld i", v->jsonNum.Int64);
+            jstr_sprintf_back(dist, "%ld i", v->jsonNum.Int64);
         } else {
-            printf("%lf f", v->jsonNum.Double);
+            jstr_sprintf_back(dist, "%lf f", v->jsonNum.Double);
         }
 
         break;
     case JBOOL:
         if (v->jsonBool.data) {
-            printf("true");
+            jstr_sprintf_back(dist, "true");
         } else {
-            printf("false");
+            jstr_sprintf_back(dist, "false");
         }
         break;
     case JARRAY:
-        jarray_output(&v->jsonArray, indent + 1);
+        jarray_output(dist, &v->jsonArray, indent + 1);
         break;
     case JMAP:
-        jmap_output(&v->jsonMap, indent + 1);
+        jmap_output(dist, &v->jsonMap, indent + 1);
         break;
     }
 }

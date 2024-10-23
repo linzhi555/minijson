@@ -68,8 +68,12 @@ int test_str_json(const char* str) {
     } else {
         printf("parse succcess\n");
     }
-    jmap_output(&jmap, 0);
+    JsonStr out;
+    init_jstr(&out);
+    jmap_output(&out, &jmap, 0);
+    printf("%s", jstr_cstr(&out));
 final:
+    free_jstr(&out);
     free_jstr(&err);
     free_jmap(&jmap);
     return ret;

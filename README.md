@@ -15,5 +15,5 @@
 
 编译测试单元
 ```
-cd test && test
+cd test && make
 ```

@@ -130,3 +130,4 @@ void jmap_output(JsonStr* dist, const JsonMap* src, int indent);
 
 // JsonValue methods
 void jvalue_output(JsonStr* dist, const JsonValue* v, int indent);
+bool Jvalue_isbasic(const JsonValue* v);

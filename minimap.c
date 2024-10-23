@@ -98,42 +98,60 @@ void jmap_output(JsonStr *dist, const JsonMap *map, int indent) {
     for (int i = 0; i < map->len; i++) {
         const JsonValue *v = &map->valueList[i];
         const JsonStr *k = &map->keyList[i];
-        jstr_sprintf_back(dist, "%skey: %s ", nspace(2 * (indent + 1)), jstr_cstr(k));
-        jstr_sprintf_back(dist, "%svalue: ", nspace(2 * (indent + 1)));
-        jvalue_output(dist, v, indent);
+        jstr_sprintf_back(dist, "%s\"%s\":", nspace(2 * (indent + 1)), jstr_cstr(k));
+
+        if (Jvalue_isbasic(v)) {
+            jvalue_output(dist, v, 0);
+        } else {
+            jvalue_output(dist, v, indent + 1);
+        }
+
+        if (i < map->len - 1) jstr_sprintf_back(dist, ",");
         jstr_sprintf_back(dist, "\n");
     }
-    jstr_sprintf_back(dist, "%s}\n", nspace(2 * indent));
+    jstr_sprintf_back(dist, "%s}", nspace(2 * indent));
 }
 
 void jvalue_output(JsonStr *dist, const JsonValue *v, int indent) {
     switch (v->type) {
     case JSTR:
-        jstr_sprintf_back(dist, "%s", jstr_cstr(&v->jsonStr));
+        jstr_sprintf_back(dist, "%s\"%s\"", nspace(2 * indent), jstr_cstr(&v->jsonStr));
         break;
     case JNULL:
-        jstr_sprintf_back(dist, "null");
+        jstr_sprintf_back(dist, "%snull", nspace(2 * indent));
         break;
     case JNUM:
         if (v->jsonNum.isInt) {
-            jstr_sprintf_back(dist, "%ld i", v->jsonNum.Int64);
+            jstr_sprintf_back(dist, "%s%ld", nspace(2 * indent), v->jsonNum.Int64);
         } else {
-            jstr_sprintf_back(dist, "%lf f", v->jsonNum.Double);
+            jstr_sprintf_back(dist, "%s%lf", nspace(2 * indent), v->jsonNum.Double);
         }
 
         break;
     case JBOOL:
         if (v->jsonBool.data) {
-            jstr_sprintf_back(dist, "true");
+            jstr_sprintf_back(dist, "%strue", nspace(2 * indent));
         } else {
-            jstr_sprintf_back(dist, "false");
+            jstr_sprintf_back(dist, "%sfalse", nspace(2 * indent));
         }
         break;
     case JARRAY:
-        jarray_output(dist, &v->jsonArray, indent + 1);
+        jarray_output(dist, &v->jsonArray, indent);
         break;
     case JMAP:
-        jmap_output(dist, &v->jsonMap, indent + 1);
+        jmap_output(dist, &v->jsonMap, indent);
         break;
+    }
+}
+
+bool Jvalue_isbasic(const JsonValue *v) {
+    switch (v->type) {
+    case JNULL:
+    case JBOOL:
+    case JSTR:
+    case JNUM:
+        return true;
+    default:
+        return false;
     }
 }

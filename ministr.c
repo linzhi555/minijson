@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,6 +34,25 @@ int jstr_cpy(JsonStr *dst, const JsonStr *src) {
     dst->data = malloc(src->cap * sizeof(char));
     memcpy(dst->data, src->data, src->cap);
     return dst->len;
+}
+
+int jstr_sprintf(JsonStr *str, const char *format, ...) {
+    va_list args, args_copy;
+    va_start(args, format);
+    va_copy(args_copy, args);
+
+    int len = vsnprintf(NULL, 0, format, args) + 1;
+    char *temp = calloc(len + 1, sizeof(char));
+    vsnprintf(temp, len + 1, format, args_copy);
+    str->cap = len + 1;
+    str->len = len;
+    free(str->data);
+    str->data = temp;
+
+    va_end(args_copy);
+    va_end(args);
+
+    return str->len;
 }
 
 int jstr_cpy_cstr(JsonStr *str, const char *cs, int len) {

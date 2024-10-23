@@ -97,6 +97,7 @@ int jnum_from_cstr(JsonNum* num, const char* cs, size_t n);
 // JsonStr methods
 void init_jstr(JsonStr* str);
 void free_jstr(JsonStr* dst);
+int jstr_sprintf(JsonStr* str, const char* format, ...);
 int jstr_cpy(JsonStr* dst, const JsonStr* src);
 int jstr_cpy_cstr(JsonStr* str, const char* cs, int len);
 const char* jstr_cstr(const JsonStr* str);

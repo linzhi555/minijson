@@ -3,4 +3,4 @@
 .cache
 .gdbinit
 compile_commands.json
-test[0-9]
+test/target

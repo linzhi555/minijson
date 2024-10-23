@@ -10,22 +10,22 @@
 #include "minilexer.h"
 #include "miniutils.h"
 
-static int parse_base_obj(JsonValue *obj, Lexer *l, char *err);
+static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err);
 
-static int parse_obj_field(JsonMap *resObj, Lexer *l, char *err) {
+static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     int old = l->cursor;
     JsonStr strObj;
     JsonValue fieldObj;
 
     if (!lexer_peek_expect(l, TK_STR)) {
-        snprintf(err, ERR_MAX_LEN, "expect 'str'     %10s", l->curStr);
+        jstr_sprintf(err, "expect 'str' at\n%.30s", l->curStr);
         goto fail;
     }
     jstr_cpy(&strObj, &lexer_peek(l)->jstr);
     lexer_next(l);
 
     if (!lexer_peek_expect(l, TK_COLON)) {
-        snprintf(err, ERR_MAX_LEN, "expect ':'       %10s", l->curStr);
+        jstr_sprintf(err, "expect ':' at\n%.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -41,14 +41,14 @@ fail:
     return 0;
 }
 
-static int parse_map(JsonMap *dst, Lexer *l, char *err) {
+static int parse_map(JsonMap *dst, Lexer *l, JsonStr *err) {
     int old = l->cursor;
     JsonMap obj;
     init_jmap(&obj);
 
     if (!lexer_peek_expect(l, TK_LBRACE)) {
-        LOG("len: %ld contents %.10s", strlen(l->curStr), l->curStr);
-        snprintf(err, ERR_MAX_LEN, "expect {       %10s", l->curStr);
+        LOG("len: %ld contents %.30s", strlen(l->curStr), l->curStr);
+        jstr_sprintf(err, "expect { at\n%.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -63,7 +63,7 @@ static int parse_map(JsonMap *dst, Lexer *l, char *err) {
     }
 
     if (!lexer_peek_expect(l, TK_RBRACE)) {
-        snprintf(err, ERR_MAX_LEN, "expect '}' at %d      %10s", l->cursor, l->curStr);
+        jstr_sprintf(err, "expect '}' at\n %.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -77,12 +77,12 @@ fail:
     return 0;
 }
 
-static int parse_array(JsonArray *dst, Lexer *l, char *err) {
+static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     int old = l->cursor;
     JsonArray array;
     init_jarray(&array);
     if (!lexer_peek_expect(l, TK_LBRACKET)) {
-        snprintf(err, ERR_MAX_LEN, "expect [       %10s", l->curStr);
+        jstr_sprintf(err, "expect '[' at\n%.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -100,7 +100,7 @@ static int parse_array(JsonArray *dst, Lexer *l, char *err) {
     }
 
     if (!lexer_peek_expect(l, TK_RBRACKET)) {
-        snprintf(err, ERR_MAX_LEN, "expect ']' at %d      %10s", l->cursor, l->curStr);
+        jstr_sprintf(err, "expect ']' at\n%.30s", l->cursor, l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -114,20 +114,23 @@ fail:
     return 0;
 }
 
-static int parse_base_obj(JsonValue *obj, Lexer *l, char *err) {
+static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err) {
     int offset = 0;
-    char nouse[ERR_MAX_LEN];
-    offset = parse_map(&obj->jsonMap, l, nouse);
+    JsonStr nouse;
+    init_jstr(&nouse);
+
+    offset = parse_map(&obj->jsonMap, l, &nouse);
     if (offset != 0) {
         obj->type = JMAP;
         return offset;
     }
 
-    offset = parse_array(&obj->jsonArray, l, nouse);
+    offset = parse_array(&obj->jsonArray, l, &nouse);
     if (offset != 0) {
         obj->type = JARRAY;
         return offset;
     }
+    free_jstr(&nouse);
 
     const Token *tk = lexer_peek(l);
     if (tk == NULL) {
@@ -164,7 +167,7 @@ static int parse_base_obj(JsonValue *obj, Lexer *l, char *err) {
     return temp;
 
 fail:
-    snprintf(err, ERR_MAX_LEN, "can not parse base obj at %10s", l->curStr);
+    jstr_sprintf(err, "can not parse base obj at\n%.30s", l->curStr);
     return 0;
 }
 
@@ -172,7 +175,7 @@ const char *minijson_version() {
     return "0.0.1";
 }
 
-int minijson_parse_str(JsonMap *res, const char *src, char *err) {
+int minijson_parse_str(JsonMap *res, const char *src, JsonStr *err) {
     Lexer l;
     init_lexer(&l, src);
 

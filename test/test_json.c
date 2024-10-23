@@ -57,10 +57,12 @@ int test_str_json(const char* str) {
     JsonMap jmap;
     int ret = 0;
     init_jmap(&jmap);
-    char err[100] = { 0 };
-    int res = minijson_parse_str(&jmap, str, err);
+    JsonStr err;
+    init_jstr(&err);
+
+    int res = minijson_parse_str(&jmap, str, &err);
     if (res == -1) {
-        printf("parse error : %s \n", err);
+        printf("parse error : %s \n", jstr_cstr(&err));
         ret = -1;
         goto final;
     } else {

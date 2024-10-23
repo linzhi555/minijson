@@ -2,24 +2,24 @@ CC=gcc
 CFLAGS = -Wall -Wextra -O0 -g
 LIBS= -I../ -L../ -lminijson
 
-ALL_TEST:test_json test_str
+ALL_TEST:target/test_json target/test_str
 
-all:test
+.PHONY: test clean lib-make
 
-target:
-	mkdir -P target
+target/test_json:test_json.c lib-make
+	@mkdir -p target
+	$(CC) $(CFLAGS) test_json.c -o $@ $(LIBS)
 
-test_json:test_json.c
-	$(CC) $(CFLAGS) $^ -o ./target/$@ $(LIBS)
+target/test_str:test_str.c lib-make
+	@mkdir -p target
+	$(CC) $(CFLAGS) test_str.c -o $@ $(LIBS)
 
-test_str:test_str.c
-	$(CC) $(CFLAGS) $^ -o ./target/$@ $(LIBS)
-
-.PHONY: lib-make test
 lib-make:
 	cd .. && make
 
-test:lib-make target
-	make $(ALL_TEST)
-	valgrind ./test_json
-	valgrind ./test_str
+test: $(ALL_TEST)
+	valgrind ./target/test_json
+	valgrind ./target/test_str
+
+clean:
+	rm -rf target

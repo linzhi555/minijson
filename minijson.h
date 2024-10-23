@@ -83,7 +83,7 @@ struct JsonValue {
 // basic api
 const char* minijson_version();
 // TODO: use minijsong instead
-int minijson_parse_str(JsonMap* res, const char* src, char* err);
+int minijson_parse_str(JsonMap* res, const char* src, JsonStr* err);
 
 // TODO: implement
 void minijson_to_str();
@@ -107,7 +107,7 @@ int jstr_from_cstr(JsonStr* dst, const char* src);
 void init_jarray(JsonArray* dst);
 void free_jarry(JsonArray* dst);
 void jarray_output(const JsonArray* array, int indent);
-int jarray_from_cstr(JsonArray* dst, const char src, char* err);
+int jarray_from_cstr(JsonArray* dst, const char src, JsonStr* err);
 int jarray_append(JsonArray* array, JsonValue newobj);
 int jarray_insert(JsonArray* array, JsonValue newobj);
 int jarray_delete(JsonArray* array, int index);
@@ -116,7 +116,7 @@ JsonValue* jarray_get(JsonArray* map, int index);
 // JsonMap methods
 int init_jmap(JsonMap* dst);
 int free_jmap(JsonMap* dst);
-int jmap_from_cstr(JsonMap* dst, const char* src, char* err);
+int jmap_from_cstr(JsonMap* dst, const char* src, JsonStr* err);
 int jmap_to_cstr(const JsonMap* src, char* dst);
 void jmap_output(const JsonMap* src, int indent);
 int jmap_set(JsonMap* map, const char* key, JsonValue val);

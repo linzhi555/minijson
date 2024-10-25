@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS = -Wall -Wextra -O0 -g
 LIBS= -I../ -L../ -lminijson
 
-ALL_TEST:target/test_json target/test_str
+test_bin:target/test_json target/test_str
 
 .PHONY: test clean lib-make
 
@@ -17,7 +17,7 @@ target/test_str:test_str.c lib-make
 lib-make:
 	cd .. && make
 
-test: $(ALL_TEST)
+test:test_bin
 	valgrind ./target/test_json
 	python3 ./check_json_same.py
 	valgrind ./target/test_str

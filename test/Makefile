@@ -17,7 +17,10 @@ target/test_str:test_str.c lib-make
 lib-make:
 	cd .. && make
 
-test:test_bin
+jsons/big_gen.json:gen_big_json.py
+	python3 gen_big_json.py
+
+test:jsons/big_gen.json test_bin
 	valgrind ./target/test_json
 	python3 ./check_json_same.py
 	valgrind ./target/test_str

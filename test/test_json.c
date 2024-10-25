@@ -4,11 +4,12 @@
 #include <string.h>
 #include "minijson.h"
 
-#define MAX_SIZE 10240  // 定义数组的最大大小
+#define MAX_SIZE 1024 * 1024 * 400  // 定义文件的最大大小 N GB
 #define MAX_FILES_NUM 100
 #define MAX_FILE_NAME_LEN 1000
 
-char buffer[MAX_SIZE] = { 0 };
+char* buffer;
+
 char files[MAX_FILES_NUM][MAX_FILE_NAME_LEN] = { 0 };
 int filenum = 0;
 
@@ -113,6 +114,9 @@ const char* basename(const char* raw) {
 }
 
 int main() {
+    int ret = 0;
+    buffer = calloc(MAX_SIZE, sizeof(char));
+
     printf("-----test1 start----\n");
     printf("minijson version :%s\n", minijson_version());
 
@@ -123,12 +127,15 @@ int main() {
         printf("\nconverting...: %s\n", infile);
         if (read_test_files(infile) == 0) {
             printf("json file test fail");
-            return EXIT_FAILURE;
+            ret = EXIT_FAILURE;
+            goto final;
         }
         char outfile[MAX_FILE_NAME_LEN + 20] = { 0 };
         snprintf(outfile, MAX_FILE_NAME_LEN + 20, "./target/%s", basename(infile));
         test_str_json(buffer, outfile);
     }
 
-    return EXIT_SUCCESS;
+final:
+    free(buffer);
+    return ret;
 }

@@ -5,6 +5,9 @@ ALL_O=minijson.o minilexer.o miniutils.o minimap.o miniarray.o ministr.o mininum
 ALL_H=minijson.h miniutils.h minilexer.h
 
 all:libminijson.a
+
+libminijson.a:$(ALL_O)
+	ar rcs libminijson.a  $^
 minijson.o:minijson.c $(ALL_H)
 minilexer.o:minilexer.c $(ALL_H)
 miniutils.o:miniutils.c $(ALL_H)
@@ -15,8 +18,6 @@ mininum.o:mininum.c $(ALL_H)
 minivalue.o:minivalue.c $(ALL_H)
 
 
-libminijson.a:$(ALL_O)
-	ar rcs libminijson.a  $^
 
 clean:
 	rm -f  ./*.o ./*.a ./compile_commands.json

@@ -21,14 +21,14 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     init_jvalue(&fieldObj);
 
     if (!lexer_peek_expect(l, TK_STR)) {
-        jstr_sprintf(err, "expect 'str' at\n%.30s", l->curStr);
+        jstr_sprintf(err, "expect key when parse obj field at\n%.30s", l->curStr);
         goto fail;
     }
     jstr_cpy(&strObj, &lexer_peek(l)->jstr);
     lexer_next(l);
 
     if (!lexer_peek_expect(l, TK_COLON)) {
-        jstr_sprintf(err, "expect ':' at\n%.30s", l->curStr);
+        jstr_sprintf(err, "expect ':' when parse obj field at\n%.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -58,12 +58,19 @@ static int parse_map(JsonMap *dst, Lexer *l, JsonStr *err) {
     }
     lexer_next(l);
 
-    // TODO: need to fix parse right when tail comma existed
-    while (parse_obj_field(&obj, l, err) != 0) {
-        if (lexer_peek_expect(l, TK_COMMA)) {
-            lexer_next(l);
-        } else {
-            break;
+    // parse map_fields of map
+    // map_fileds = empty | map_field + N * ( , + map_field)
+    if (parse_obj_field(&obj, l, err) == 0) {
+    } else {
+        while (true) {
+            if (lexer_peek_expect(l, TK_COMMA)) {
+                lexer_next(l);
+            } else {
+                break;
+            }
+            if (parse_obj_field(&obj, l, err) == 0) {
+                goto fail;
+            }
         }
     }
 
@@ -95,13 +102,22 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     JsonValue obj;
     init_jvalue(&obj);
 
-    // TODO: need to fix parse right when tail comma existed
-    while (parse_base_obj(&obj, l, err) != 0) {
+    // array elements = empty | obj + N*( , + obj)
+    if (parse_base_obj(&obj, l, err) == 0) {
+    } else {
         jarray_append(&array, obj);
-        if (lexer_peek_expect(l, TK_COMMA)) {
-            lexer_next(l);
-        } else {
-            break;
+        while (true) {
+            if (lexer_peek_expect(l, TK_COMMA)) {
+                lexer_next(l);
+            } else {
+                break;
+            }
+            if (parse_base_obj(&obj, l, err) != 0) {
+                jarray_append(&array, obj);
+            } else {
+                jstr_sprintf(err, "expect obj when parse array after , at \n%.30s", l->curStr);
+                goto fail;
+            }
         }
     }
 
@@ -120,6 +136,7 @@ fail:
     return 0;
 }
 
+//TODO: now the parse_base_obj just can give the ambigous error like "fail when parse_base_obj"
 static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err) {
     int offset = 0;
     JsonStr nouse;

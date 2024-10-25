@@ -82,10 +82,9 @@ struct JsonValue {
 
 // basic api
 const char* minijson_version();
-// TODO: use minijsong instead
-int minijson_parse_str(JsonMap* res, const char* src, JsonStr* err);
 
-// TODO: implement
+//TODO: we cannot assume the str from file is a map! may a array or some thing
+int minijson_parse_str(JsonMap* res, const char* src, JsonStr* err);
 void minijson_to_str();
 
 // JsonNull methods

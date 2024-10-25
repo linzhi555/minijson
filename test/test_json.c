@@ -78,32 +78,29 @@ static int test_str_json(const char* str, const char* outfile) {
 
     JsonStr err;
     init_jstr(&err);
-    int ret = 0;
-
-    int res = minijson_parse_str(&jmap, str, &err);
-    if (res == -1) {
-        printf("parse error: %s \n", jstr_cstr(&err));
-        ret = -1;
-        goto final;
-    } else {
-        printf("parse succcess\n");
-    }
-
     JsonStr out;
     init_jstr(&out);
 
-    jmap_output(&out, &jmap, 0);
-    printf("%s", jstr_cstr(&out));
+    int parse_fail = minijson_parse_str(&jmap, str, &err);
+
+    if (parse_fail != 0) {
+        printf("parse error: %s \n", jstr_cstr(&err));
+        jstr_cpy(&out, &err);  // output error info when fail
+    } else {
+        jmap_output(&out, &jmap, 0);  // // serialze the map when parse success
+        printf("%s", jstr_cstr(&out));
+        printf("parse succcess\n");
+    }
+
     int save_err = _str_saveas(jstr_cstr(&out), outfile);
     if (save_err != 0) {
         printf("save file fail: %s\n", outfile);
     }
 
-final:
     free_jstr(&out);
     free_jstr(&err);
     free_jmap(&jmap);
-    return ret;
+    return parse_fail;
 }
 
 const char* basename(const char* raw) {

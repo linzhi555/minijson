@@ -27,7 +27,7 @@
     make
 ```
 
-编译测试单元
+运行测试
 ```
-cd test && make
+cd test && make test
 ```

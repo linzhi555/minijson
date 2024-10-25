@@ -1,0 +1,8 @@
+{
+    "a1":null,
+    "a2":true,
+    "a3":false,
+    "a4": "asdfsdf",
+    "a5": [null , true ,false ,"asdfsdf", [1 ,2 ], {"a51":1,"a52":2}],
+    "a6":{"null":null, "true":true,"false":false}
+}

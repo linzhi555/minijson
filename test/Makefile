@@ -19,6 +19,7 @@ lib-make:
 
 test: $(ALL_TEST)
 	valgrind ./target/test_json
+	python3 ./check_json_same.py
 	valgrind ./target/test_str
 
 clean:

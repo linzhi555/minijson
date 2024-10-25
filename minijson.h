@@ -115,8 +115,8 @@ JsonValue* jarray_get(JsonArray* map, int index);
 void jarray_output(JsonStr* dist, const JsonArray* array, int indent);
 
 // JsonMap methods
-int init_jmap(JsonMap* dst);
-int free_jmap(JsonMap* dst);
+void init_jmap(JsonMap* dst);
+void free_jmap(JsonMap* dst);
 int jmap_from_cstr(JsonMap* dst, const char* src, JsonStr* err);
 int jmap_to_cstr(const JsonMap* src, char* dst);
 int jmap_set(JsonMap* map, const char* key, JsonValue val);
@@ -129,5 +129,7 @@ int* jmap_delete(JsonMap* map, const char* key);
 void jmap_output(JsonStr* dist, const JsonMap* src, int indent);
 
 // JsonValue methods
+void init_jvalue(JsonValue* value);
+void free_jvalue(JsonValue* value);
 void jvalue_output(JsonStr* dist, const JsonValue* v, int indent);
 bool Jvalue_isbasic(const JsonValue* v);

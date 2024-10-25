@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS = -Wall -Wextra -O0 -g -std=c99
 
-ALL_O=minijson.o minilexer.o miniutils.o minimap.o miniarray.o ministr.o mininum.o
+ALL_O=minijson.o minilexer.o miniutils.o minimap.o miniarray.o ministr.o mininum.o minivalue.o
 ALL_H=minijson.h miniutils.h minilexer.h
 
 all:libminijson.a
@@ -12,6 +12,7 @@ minimap.o:minimap.c $(ALL_H)
 miniarray.o:miniarray.c $(ALL_H)
 ministr.o:ministr.c $(ALL_H)
 mininum.o:mininum.c $(ALL_H)
+minivalue.o:minivalue.c $(ALL_H)
 
 
 libminijson.a:$(ALL_O)

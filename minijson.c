@@ -12,10 +12,13 @@
 
 static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err);
 
+// obj_field = key(jsonStr) + : + value(jsonValue)
 static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     int old = l->cursor;
     JsonStr strObj;
+    init_jstr(&strObj);
     JsonValue fieldObj;
+    init_jvalue(&fieldObj);
 
     if (!lexer_peek_expect(l, TK_STR)) {
         jstr_sprintf(err, "expect 'str' at\n%.30s", l->curStr);
@@ -37,6 +40,8 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     return l->cursor - old;
 
 fail:
+    free_jstr(&strObj);
+    free_jvalue(&fieldObj);
     lexer_set(l, old);
     return 0;
 }
@@ -88,6 +93,7 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     lexer_next(l);
 
     JsonValue obj;
+    init_jvalue(&obj);
 
     // TODO: need to fix parse right when tail comma existed
     while (parse_base_obj(&obj, l, err) != 0) {
@@ -122,12 +128,14 @@ static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err) {
     offset = parse_map(&obj->jsonMap, l, &nouse);
     if (offset != 0) {
         obj->type = JMAP;
+        free_jstr(&nouse);
         return offset;
     }
 
     offset = parse_array(&obj->jsonArray, l, &nouse);
     if (offset != 0) {
         obj->type = JARRAY;
+        free_jstr(&nouse);
         return offset;
     }
     free_jstr(&nouse);

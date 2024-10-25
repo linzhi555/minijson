@@ -24,6 +24,7 @@ void init_jstr(JsonStr *str) {
 
 void free_jstr(JsonStr *str) {
     free(str->data);
+    init_jstr(str);
 }
 
 int jstr_cpy(JsonStr *dst, const JsonStr *src) {

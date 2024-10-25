@@ -11,11 +11,11 @@ void init_jarray(JsonArray* dst) {
 }
 
 void free_jarry(JsonArray* dst) {
-    if (dst->cap != 0) {
-        free(dst->list);
+    for (int i = 0; i < dst->len; i++) {
+        free_jvalue(&dst->list[i]);
     }
-    dst->len = 0;
-    dst->cap = 0;
+    free(dst->list);
+    init_jarray(dst);
 }
 
 static int jarray_ensure_cap(JsonArray* array, int newcap) {

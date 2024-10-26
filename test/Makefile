@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -Wall -Wextra -O0 -g
+CFLAGS = -Wall -Wextra -O1 -g
 LIBS= -I../ -L../ -lminijson
 
 test_bin:target/test_json target/test_str

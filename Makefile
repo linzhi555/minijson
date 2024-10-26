@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -Wall -Wextra -O0 -g -std=c99
+CFLAGS = -Wall -Wextra -O1 -g -std=c99
 
 ALL_O=minijson.o minilexer.o miniutils.o minimap.o miniarray.o ministr.o mininum.o minivalue.o
 ALL_H=minijson.h miniutils.h minilexer.h

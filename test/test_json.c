@@ -4,6 +4,20 @@
 #include <string.h>
 #include "minijson.h"
 
+#ifdef _WIN32
+
+#define PATH_SEP '\\'
+
+#elif __unix__
+
+#define PATH_SEP '/'
+
+#else
+
+#define PATH_SEP '/'
+
+#endif
+
 #define MAX_SIZE 1024 * 1024 * 400  // 定义文件的最大大小 N GB
 #define MAX_FILES_NUM 100
 #define MAX_FILE_NAME_LEN 1000
@@ -106,7 +120,7 @@ static int test_str_json(const char* str, const char* outfile) {
 
 const char* basename(const char* raw) {
     for (int i = strlen(raw) - 1; i >= 0; i--) {
-        if (raw[i] == '/' || raw[i] == '\\') {
+        if (raw[i] == PATH_SEP) {
             return &raw[i + 1];
         }
     }

@@ -6,7 +6,11 @@
 #include "minijson.h"
 #include "miniutils.h"
 
-// 把字符串hash至 0 - N-1 的 uint 值
+#define INITIAL_HASH_SPACE 10
+#define LOAD_RATIO 0.8   // when (kvLen / indexCap) > LOAD_RATIO, the map will rebuild the indexes
+#define EXPAND_RATIO 10  // the new indexCap will have EXPAND_RATIO times than old
+
+// hash the char* to (0 - N-1)
 #define HASH_CHARS(chars, N) (fnv1a_32(chars, strlen(chars)) % N)
 
 static uint32_t fnv1a_32(const char *data, size_t len) {
@@ -21,17 +25,14 @@ static uint32_t fnv1a_32(const char *data, size_t len) {
     return hash;  // 返回最终哈希值
 }
 
-#define INITIAL_HASH_SPACE 100
+static void set_index(JsonMap *map, KVNode *node);
 
-void init_jmap(JsonMap *map) {
-    map->indexCap = INITIAL_HASH_SPACE;
+static void init_index(JsonMap *map, int cap) {
+    map->indexCap = cap;
     map->indexes = calloc(sizeof(Index), map->indexCap);
-
-    map->kvLen = 0;
-    map->head = calloc(sizeof(KVNode), 1);
-    map->tail = calloc(sizeof(KVNode), 1);
-    map->head->next = map->tail;
-    map->tail->pre = map->head;
+    for (KVNode *p = map->head->next; p != map->tail; p = p->next) {
+        set_index(map, p);
+    }
 }
 
 static void free_index(JsonMap *map) {
@@ -88,10 +89,17 @@ final:
     target->ptr = node;
 }
 
-void free_jmap(JsonMap *map) {
-    // free map indexes
-    free_index(map);
+void init_jmap(JsonMap *map) {
+    map->kvLen = 0;
+    map->head = calloc(sizeof(KVNode), 1);
+    map->tail = calloc(sizeof(KVNode), 1);
+    map->head->next = map->tail;
+    map->tail->pre = map->head;
 
+    init_index(map, INITIAL_HASH_SPACE);
+}
+
+void free_jmap(JsonMap *map) {
     // free content of holds by nodes
     for (KVNode *p = map->head->next; p != map->tail; p = p->next) {
         free(p->key);
@@ -105,12 +113,14 @@ void free_jmap(JsonMap *map) {
         p = p->next;
         free(temp);
     }
-
     free(map->head);
     free(map->tail);
     map->head = NULL;
     map->tail = NULL;
     map->kvLen = 0;
+
+    // free map indexes
+    free_index(map);
 }
 
 int jmap_set(JsonMap *map, const char *key, JsonValue val) {
@@ -125,6 +135,12 @@ int jmap_set(JsonMap *map, const char *key, JsonValue val) {
 
     // add kvnode when necessary
     if (target == NULL) {
+        // expand the cap of indexes if the space to crowded
+        if ((float) map->kvLen >= (float) map->indexCap * LOAD_RATIO) {
+            free_index(map);
+            init_index(map, map->indexCap * EXPAND_RATIO);
+        }
+
         // create new node with key
         KVNode *newnode = calloc(1, sizeof(KVNode));
         newnode->key = calloc(strlen(key) + 1, sizeof(char));
@@ -142,10 +158,11 @@ int jmap_set(JsonMap *map, const char *key, JsonValue val) {
         set_index(map, newnode);
 
         target = newnode;
+        map->kvLen++;
     }
-    *target->value = val;
 
-    LOG("set %s %d , now map len:%d\n", key, val.type, map->len);
+    *target->value = val;
+    LOG("set %s %d , now map len:%d\n", key, val.type, map->kvLen);
     return 0;
 }
 

@@ -30,7 +30,7 @@ with open("jsons/big_gen.json", "w") as file:
     file.write("\"o{}\":".format(0))
     file.write(json_string)
 
-    for i in range(1, 40000):
+    for i in range(1, 400000):
         file.write(",\n")
         file.write("\"o{}\":".format(i))
         file.write(json_string)

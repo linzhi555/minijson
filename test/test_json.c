@@ -66,9 +66,6 @@ int read_test_files(const char* filename) {
     bytesRead = fread(buffer, sizeof(char), MAX_SIZE - 1, file);
     buffer[bytesRead] = '\0';  // 确保字符串以 null 结尾
 
-    // 输出读取的内容
-    printf("读取的内容:\n%s\n", buffer);
-
     // 关闭文件
     fclose(file);
     return bytesRead;
@@ -99,12 +96,11 @@ static int test_str_json(const char* str, const char* outfile) {
     int parse_fail = minijson_parse_str(&jmap, str, &err);
 
     if (parse_fail != 0) {
-        printf("parse error: %s \n", jstr_cstr(&err));
+        printf(".......FAIL parse error: %s \n", jstr_cstr(&err));
         jstr_cpy(&out, &err);  // output error info when fail
     } else {
         jmap_output(&out, &jmap, 0);  // // serialze the map when parse success
-        printf("%s", jstr_cstr(&out));
-        printf("parse succcess\n");
+        printf(".......SUCCESS\n");
     }
 
     int save_err = _str_saveas(jstr_cstr(&out), outfile);
@@ -138,7 +134,7 @@ int main() {
 
     for (int i = 0; i < filenum; i++) {
         const char* infile = files[i];
-        printf("\nconverting...: %s\n", infile);
+        printf("converting %s", infile);
         if (read_test_files(infile) == 0) {
             printf("json file test fail");
             ret = EXIT_FAILURE;

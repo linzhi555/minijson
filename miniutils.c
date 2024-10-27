@@ -48,7 +48,7 @@ const char *spaces =
                                                         ";
 
 const char *nspace(int n) {
-    if (n > (int)strlen(spaces)) {
+    if (n > (int) strlen(spaces)) {
         return spaces;
     }
 

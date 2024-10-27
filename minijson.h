@@ -62,11 +62,38 @@ typedef struct {
     JsonValue* list;
 } JsonArray;
 
+typedef struct MapKV {
+    struct MapKV* next;
+    struct MapKV* pre;
+    char* key;
+    JsonValue* value;
+} KVNode;
+
+typedef struct Index {
+    KVNode* ptr;
+    struct Index* next;
+} Index;
+
+// jsonMap all kvs stored in kvList,and has two extra headnode and tailnode,
+//
+// (when list empty)
+// head <-> tailhead<-node
+//
+// (list has two actual node)
+// 0<->node1<->tail
+//
+// we use indexes and hash function to access the list node ,the hash maybe collide,so the index is a list
+//      [    0    1      2     3     ]
+//         null  node1* null  node2*
+//                |
+//                v
+//               node3*
 typedef struct {
-    int len;
-    int cap;
-    JsonStr* keyList;
-    JsonValue* valueList;
+    int indexCap;
+    Index* indexes;
+    int kvLen;
+    KVNode* head;
+    KVNode* tail;
 } JsonMap;
 
 struct JsonValue {
@@ -83,7 +110,7 @@ struct JsonValue {
 // basic api
 const char* minijson_version();
 
-//TODO: we cannot assume the str from file is a map! may a array or some thing
+// TODO: we cannot assume the str from file is a map! may a array or some thing
 int minijson_parse_str(JsonMap* res, const char* src, JsonStr* err);
 void minijson_to_str();
 

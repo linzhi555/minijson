@@ -1,2 +1,4 @@
 target
+*.out
+*.log
 jsons/*_gen.json

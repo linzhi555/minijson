@@ -5,6 +5,13 @@ int main() {
     JsonStr str;
     init_jstr(&str);
 
+    jstr_cpy_cstr(&str, "asdf", 4);
+    printf("len:%d cap:%d\n%s\n", str.len, str.cap, jstr_cstr(&str));
+    assert(str.len == 4);
+
+    free_jstr(&str);
+    init_jstr(&str);
+
     jstr_sprintf_back(&str, "1234:%d", 11);
     printf("len:%d cap:%d\n%s\n", str.len, str.cap, jstr_cstr(&str));
     assert(str.len == 7);

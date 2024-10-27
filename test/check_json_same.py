@@ -61,10 +61,7 @@ for basename in basenames:
     srcRes = parse_json_file(iName)
     dstRes = parse_json_file(oName)
 
-    print("srcMap from {} :".format(iName))
-    print(srcRes.some)
-    print("dstMap from {} :".format(oName))
-    print(dstRes.some)
+    print("checking srcMap : {} and dstMap : {} :".format(iName, oName))
     issame = srcRes == dstRes
     print("srcMap == dstMap is", issame)
     if not issame:

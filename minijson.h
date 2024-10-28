@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define ERR_MAX_LEN 100
 typedef enum {
     JNULL,
     JBOOL,
@@ -36,7 +35,7 @@ typedef enum {
     JSTR,
     JARRAY,
     JMAP,
-} JsonObjType;
+} JsonType;
 
 typedef struct {
     bool data;
@@ -97,7 +96,7 @@ typedef struct {
 } JsonMap;
 
 struct JsonValue {
-    JsonObjType type;
+    JsonType type;
     union {
         JsonBool jsonBool;
         JsonNum jsonNum;

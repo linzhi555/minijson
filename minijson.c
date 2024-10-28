@@ -18,7 +18,7 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     JsonStr strObj;
     init_jstr(&strObj);
     JsonValue fieldObj;
-    init_jvalue(&fieldObj);
+    init_jvalue_null(&fieldObj);
 
     if (!lexer_peek_expect(l, TK_STR)) {
         jstr_sprintf(err, "expect key when parse obj field at\n%.30s", l->curStr);
@@ -100,7 +100,7 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     lexer_next(l);
 
     JsonValue obj;
-    init_jvalue(&obj);
+    init_jvalue_null(&obj);
 
     // array elements = empty | obj + N*( , + obj)
     if (parse_base_obj(&obj, l, err) == 0) {
@@ -136,7 +136,7 @@ fail:
     return 0;
 }
 
-//TODO: now the parse_base_obj just can give the ambigous error like "fail when parse_base_obj"
+// TODO: now the parse_base_obj just can give the ambigous error like "fail when parse_base_obj"
 static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err) {
     int offset = 0;
     JsonStr nouse;

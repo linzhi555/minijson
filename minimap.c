@@ -51,7 +51,7 @@ static void free_index(JsonMap *map) {
     map->indexes = NULL;
 }
 
-static Index *find_indx(JsonMap *map, const char *key) {
+static Index *find_index(JsonMap *map, const char *key) {
     int idx = HASH_CHARS(key, map->indexCap);
     Index *p = &map->indexes[idx];
     if (p->ptr == NULL) return NULL;
@@ -100,6 +100,8 @@ void init_jmap(JsonMap *map) {
 }
 
 void free_jmap(JsonMap *map) {
+    if (map == NULL) return;
+
     // free content of holds by nodes
     for (KVNode *p = map->head->next; p != map->tail; p = p->next) {
         free(p->key);
@@ -128,14 +130,12 @@ int jmap_set(JsonMap *map, const char *key, JsonValue val) {
     assert(map != NULL);
     KVNode *target = NULL;
 
-    Index *temp = find_indx(map, key);
+    Index *temp = find_index(map, key);
     if (temp != NULL) {
         target = temp->ptr;
-    }
+    } else {  // add kvnode there is no index
 
-    // add kvnode when necessary
-    if (target == NULL) {
-        // expand the cap of indexes if the space to crowded
+        // expand the cap of indexes firstly if the space to crowded
         if ((float) map->kvLen >= (float) map->indexCap * LOAD_RATIO) {
             free_index(map);
             init_index(map, map->indexCap * EXPAND_RATIO);
@@ -164,6 +164,17 @@ int jmap_set(JsonMap *map, const char *key, JsonValue val) {
     *target->value = val;
     LOG("set %s %d , now map len:%d\n", key, val.type, map->kvLen);
     return 0;
+}
+
+JsonValue jmap_get(JsonMap *map, const char *key) {
+    Index *temp = find_index(map, key);
+    if (temp != NULL) {
+        return *temp->ptr->value;
+    }
+
+    JsonValue ret;
+    init_jvalue_null(&ret);
+    return ret;
 }
 
 int jmap_set_str(JsonMap *map, const char *key, const char *val) {

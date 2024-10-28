@@ -150,12 +150,12 @@ int jmap_set_str(JsonMap* map, const char* key, const char* val);
 int jmap_set_int(JsonMap* map, const char* key, size_t val);
 int jmap_set_float(JsonMap* map, const char* key, double val);
 int jmap_set_bool(JsonMap* map, const char* key, bool val);
-JsonValue* jmap_get(JsonMap* map, const char* key);
+JsonValue jmap_get(JsonMap* map, const char* key);
 int* jmap_delete(JsonMap* map, const char* key);
 void jmap_output(JsonStr* dist, const JsonMap* src, int indent);
 
 // JsonValue methods
-void init_jvalue(JsonValue* value);
+void init_jvalue_null(JsonValue* value);
 void free_jvalue(JsonValue* value);
 void jvalue_output(JsonStr* dist, const JsonValue* v, int indent);
 bool Jvalue_isbasic(const JsonValue* v);

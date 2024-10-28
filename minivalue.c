@@ -1,7 +1,7 @@
 #include "minijson.h"
 #include "miniutils.h"
 
-void init_jvalue(JsonValue *v) {
+void init_jvalue_null(JsonValue *v) {
     v->type = JNULL;
 }
 void free_jvalue(JsonValue *v) {

@@ -134,7 +134,8 @@ int main() {
 
     for (int i = 0; i < filenum; i++) {
         const char* infile = files[i];
-        printf("converting %s", infile);
+        printf("=========================\n");
+        printf("converting %s\n", infile);
         if (read_test_files(infile) == 0) {
             printf("json file test fail");
             ret = EXIT_FAILURE;
@@ -144,6 +145,8 @@ int main() {
         snprintf(outfile, MAX_FILE_NAME_LEN + 20, "./target/%s", basename(infile));
         test_str_json(buffer, outfile);
     }
+
+    printf("=========================\n");
 
 final:
     free(buffer);

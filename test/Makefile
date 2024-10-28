@@ -30,6 +30,7 @@ test:jsons/big_gen.json test_bin
 	./target/test_json
 	python3 ./check_json_same.py
 	./target/test_str
+	./target/test_map
 
 clean:
 	rm -rf target

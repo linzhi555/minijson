@@ -34,7 +34,7 @@ int main() {
         JsonValue jv = jmap_get(&map, k);
         assert(jv.type == JSTR);
         assert(strcmp(jv.jsonStr.data, v) == 0);
-        printf("map[name] is %s\n", jv.jsonStr.data);
+        printf("map[%s] is %s\n", k, jv.jsonStr.data);
     }
     assert(map.kvLen == KVNUM);
     printf("%d", map.indexCap);

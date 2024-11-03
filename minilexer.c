@@ -73,7 +73,7 @@ const Token *lexer_peek(Lexer *l) {
         goto finish;
     }
 
-    len = jnum_from_cstr(&l->curToken.jnum, str, find_space(str) + 1);
+    len = jnum_from_cstr(&l->curToken.jnum, str, find_no_dot_or_digit(str) + 1);
     if (len != 0) {
         l->curToken.type = TK_NUM;
         goto finish;

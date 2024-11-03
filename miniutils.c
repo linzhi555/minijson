@@ -17,6 +17,15 @@ int find_space(const char *cs) {
     return 0;
 }
 
+// return the index of char that can not be parse of number
+int find_no_dot_or_digit(const char *cs) {
+    int i;
+    for (i = 0; cs[i] != '\0'; i++) {
+        if (!isdigit(cs[i]) && cs[i] != '.') return i;
+    }
+    return i;
+}
+
 const char *spaces =
     "                                                   \
                                                         \

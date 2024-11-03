@@ -18,6 +18,7 @@
 
 int skip_space(const char *cs);
 int find_space(const char *cs);
+int find_no_dot_or_digit(const char *cs);
 
 // return a const char* of n ' ', n < 255
 const char *nspace(int n);

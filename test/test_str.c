@@ -28,5 +28,8 @@ int main() {
     printf("len:%d cap:%d\n%s\n", str.len, str.cap, jstr_cstr(&str));
     assert(str.len == 25);
 
+    printf("test str SUCCESS\n");
+    printf("=========================\n");
+
     free_jstr(&str);
 }

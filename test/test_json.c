@@ -93,7 +93,7 @@ static int test_str_json(const char* str, const char* outfile) {
     JsonStr out;
     init_jstr(&out);
 
-    int parse_fail = minijson_parse_str(&jmap, str, &err);
+    int parse_fail = minijson_parse_map(&jmap, str, &err);
 
     if (parse_fail != 0) {
         printf(".......FAIL parse error: %s \n", jstr_cstr(&err));

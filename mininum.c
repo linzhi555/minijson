@@ -7,9 +7,9 @@ int jnum_from_cstr(JsonNum *num, const char *cs, size_t n) {
     int64_t dot0s = 0;  // zero nums after dot, 11.000203 's dot0s is 3
 
     char state = 's';  // s : start, i : interger , d: dot, f:float
-    size_t i;
-    for (i = 0; i < n; i++) {
-        char c = cs[i];
+    size_t offset;
+    for (offset = 0; offset < n; offset++) {
+        char c = cs[offset];
         if (state == 's') {
             if (isspace(c)) continue;
             if (!isdigit(c)) goto fail;
@@ -65,7 +65,7 @@ int jnum_from_cstr(JsonNum *num, const char *cs, size_t n) {
     } else {
         goto fail;
     }
-    return i;
+    return offset;
 fail:
     return 0;
 }

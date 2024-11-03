@@ -22,7 +22,7 @@ int main() {
     init_jstr(&out);
 
     jmap_output(&out, &map, 0);
-    printf("%s\n", jstr_cstr(&out));
+    printf("%.100s\n", jstr_cstr(&out));
 
     // check kvs
     for (int i = KVNUM - 1; i >= 0; i--) {
@@ -34,10 +34,12 @@ int main() {
         JsonValue jv = jmap_get(&map, k);
         assert(jv.type == JSTR);
         assert(strcmp(jv.jsonStr.data, v) == 0);
-        printf("map[%s] is %s\n", k, jv.jsonStr.data);
     }
     assert(map.kvLen == KVNUM);
-    printf("%d", map.indexCap);
+    printf("%d\n", map.indexCap);
+
+    printf("test map SUCCESS\n");
+    printf("=========================\n");
 
     free_jstr(&out);
     free_jmap(&map);

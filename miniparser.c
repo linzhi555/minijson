@@ -122,7 +122,7 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     }
 
     if (!lexer_peek_expect(l, TK_RBRACKET)) {
-        jstr_sprintf(err, "expect ']' at\n%.30s", l->cursor, l->curStr);
+        jstr_sprintf(err, "expect ']' at\n%.30s", l->curStr);
         goto fail;
     }
     lexer_next(l);
@@ -200,11 +200,23 @@ const char *minijson_version() {
     return "0.0.1";
 }
 
-int minijson_parse_str(JsonMap *res, const char *src, JsonStr *err) {
+int minijson_parse_map(JsonMap *res, const char *src, JsonStr *err) {
     Lexer l;
     init_lexer(&l, src);
 
     int len = parse_map(res, &l, err);
+    free_lexer(&l);
+    if (len == 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int minijson_parse_array(JsonArray *res, const char *src, JsonStr *err) {
+    Lexer l;
+    init_lexer(&l, src);
+
+    int len = parse_array(res, &l, err);
     free_lexer(&l);
     if (len == 0) {
         return -1;

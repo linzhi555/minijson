@@ -108,10 +108,8 @@ struct JsonValue {
 
 // basic api
 const char* minijson_version();
-
-// TODO: we cannot assume the str from file is a map! may a array or some thing
-int minijson_parse_str(JsonMap* res, const char* src, JsonStr* err);
-void minijson_to_str();
+int minijson_parse_map(JsonMap* res, const char* src, JsonStr* err);
+int minijson_parse_array(JsonArray* res, const char* src, JsonStr* err);
 
 // JsonNull methods
 bool is_null(const JsonValue* obj);
@@ -142,8 +140,6 @@ void jarray_output(JsonStr* dist, const JsonArray* array, int indent);
 // JsonMap methods
 void init_jmap(JsonMap* dst);
 void free_jmap(JsonMap* dst);
-int jmap_from_cstr(JsonMap* dst, const char* src, JsonStr* err);
-int jmap_to_cstr(const JsonMap* src, char* dst);
 int jmap_set(JsonMap* map, const char* key, JsonValue val);
 int jmap_set_str(JsonMap* map, const char* key, const char* val);
 int jmap_set_int(JsonMap* map, const char* key, size_t val);

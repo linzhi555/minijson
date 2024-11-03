@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS = -Wall -Wextra -O1 -g  -pg
 LIBS= -I../ -L../ -lminijson
 
-test_bin:target/test_json target/test_str target/test_map
+test_bin:target/test_json target/test_str target/test_map target/test_array
 
 .PHONY: test clean lib-make
 
@@ -18,6 +18,10 @@ target/test_map:test_map.c lib-make
 	@mkdir -p target
 	$(CC) $(CFLAGS) test_map.c -o $@ $(LIBS)
 
+target/test_array:test_array.c lib-make
+	@mkdir -p target
+	$(CC) $(CFLAGS) test_array.c -o $@ $(LIBS)
+
 
 
 lib-make:
@@ -31,6 +35,7 @@ test:jsons/big_gen.json test_bin
 	python3 ./check_json_same.py
 	./target/test_str
 	./target/test_map
+	./target/test_array
 
 clean:
 	rm -rf target

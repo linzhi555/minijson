@@ -10,7 +10,7 @@
 #include "minilexer.h"
 #include "miniutils.h"
 
-static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err);
+static int parse_value(JsonValue *obj, Lexer *l, JsonStr *err);
 
 // obj_field = key(jsonStr) + : + value(jsonValue)
 static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
@@ -33,7 +33,7 @@ static int parse_obj_field(JsonMap *resObj, Lexer *l, JsonStr *err) {
     }
     lexer_next(l);
 
-    if (parse_base_obj(&fieldObj, l, err) == 0) goto fail;
+    if (parse_value(&fieldObj, l, err) == 0) goto fail;
 
     jmap_set(resObj, jstr_cstr(&strObj), fieldObj);
     free_jstr(&strObj);
@@ -103,7 +103,7 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
     init_jvalue_null(&obj);
 
     // array elements = empty | obj + N*( , + obj)
-    if (parse_base_obj(&obj, l, err) == 0) {
+    if (parse_value(&obj, l, err) == 0) {
     } else {
         jarray_append(&array, obj);
         while (true) {
@@ -112,7 +112,7 @@ static int parse_array(JsonArray *dst, Lexer *l, JsonStr *err) {
             } else {
                 break;
             }
-            if (parse_base_obj(&obj, l, err) != 0) {
+            if (parse_value(&obj, l, err) != 0) {
                 jarray_append(&array, obj);
             } else {
                 jstr_sprintf(err, "expect obj when parse array after , at \n%.30s", l->curStr);
@@ -136,8 +136,9 @@ fail:
     return 0;
 }
 
-// TODO: now the parse_base_obj just can give the ambigous error like "fail when parse_base_obj"
-static int parse_base_obj(JsonValue *obj, Lexer *l, JsonStr *err) {
+// TODO: now the parse_value just can just give the ambigous error like "fail when parse_value"
+// we need more specified error
+static int parse_value(JsonValue *obj, Lexer *l, JsonStr *err) {
     int offset = 0;
     JsonStr nouse;
     init_jstr(&nouse);
@@ -223,5 +224,19 @@ int minijson_parse_array(JsonArray *res, const char *src, JsonStr *err) {
     }
     return 0;
 }
+
+
+int minijson_parse_any(JsonValue *res, const char *src, JsonStr *err) {
+    Lexer l;
+    init_lexer(&l, src);
+
+    int len = parse_value(res, &l, err);
+    free_lexer(&l);
+    if (len == 0) {
+        return -1;
+    }
+    return 0;
+}
+
 
 void minijson_to_str();

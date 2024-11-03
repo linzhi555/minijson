@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -O1 -g -std=c99
 ALL_O=miniparser.o minilexer.o miniutils.o minimap.o miniarray.o ministr.o mininum.o minivalue.o
 ALL_H=minijson.h miniutils.h minilexer.h
 
-all:libminijson.a
+all:libminijson.a mjfmt
 
 libminijson.a:$(ALL_O)
 	ar rcs libminijson.a  $^
@@ -17,7 +17,8 @@ ministr.o:ministr.c $(ALL_H)
 mininum.o:mininum.c $(ALL_H)
 minivalue.o:minivalue.c $(ALL_H)
 
-
+mjfmt: libminijson.a
+	$(CC) $(CFLAGS) ./mjfmt.c -o mjfmt -lminijson -L./
 
 clean:
 	rm -f  ./*.o ./*.a

@@ -110,6 +110,7 @@ struct JsonValue {
 const char* minijson_version();
 int minijson_parse_map(JsonMap* res, const char* src, JsonStr* err);
 int minijson_parse_array(JsonArray* res, const char* src, JsonStr* err);
+int minijson_parse_any(JsonValue* res, const char* src, JsonStr* err);
 
 // JsonNull methods
 bool is_null(const JsonValue* obj);

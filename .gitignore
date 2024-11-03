@@ -4,3 +4,5 @@
 .gdbinit
 compile_commands.json
 test/target
+mjfmt
+*.log

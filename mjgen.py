@@ -3,34 +3,105 @@
 import sys
 import re
 import os
-from typing import List
+from typing import List, Tuple
 from dataclasses import dataclass
+
+
+def panic(err: str):
+    print(err)
+    sys.exit(1)
 
 
 @dataclass
 class CStructField:
+    """the field of a struct"""
     name: str
     ctype: str
 
 
 @dataclass
 class CStruct:
+    """the c struct definition"""
     name: str
     fields: List[CStructField]
 
 
-def generate_code(structs: List[CStruct]) -> tuple:
-    """ return (hfile,cfile)"""
-    hfile = []
-    cfile = []
+c_int_types = [
+    "char",
+    "short",
+    "int",
+    "int64_t",
+    "long",
+    "long long",
+]
+c_int_types = c_int_types + ["unsigned "+t for t in c_int_types]
+c_int_types = c_int_types + ["const "+t for t in c_int_types]
+
+
+c_float_types = [
+    "double",
+    "float",
+]
+c_float_types = c_float_types + ["const "+t for t in c_float_types]
+print(c_float_types)
+
+c_str_types = [
+    "char*",
+    "const char*",
+]
+
+
+def _type_to_func(ctype: str) -> str | None:
+    if ctype in c_int_types:
+        return "jmap_set_int"
+
+    elif ctype in c_float_types:
+        return "jmap_set_float"
+
+    elif ctype in c_str_types:
+        return "jmap_set_str"
+
+    elif ctype in ["bool"]:
+        return "jmap_set_bool"
+
+    return None
+
+
+def generate_code(structs: List[CStruct]) -> Tuple[List[str], List[str]]:
+    """
+    give some structs definitions then generate the convertion code
+    return (hfile,cfile)
+    hfile means the content of .h file, cfile means the content .c file
+    """
+    hfile: List[str] = []
+    cfile: List[str] = []
+
+    hfile.append('#include "minijson.h"')
+    cfile.append('#include "minijson.h"')
+
     for stct in structs:
-        temp = "void {n}_to_json(struct {n} *t)".format(n=stct.name)
-        cfile.append(temp)
+
+        temp = "void {n}_to_json(JsonMap* dst,struct {n}* t)"\
+            .format(n=stct.name)
         hfile.append(temp+";")
 
-        temp = "void {n}_from_json(struct {n} *t)".format(n=stct.name)
-        cfile.append(temp)
-        hfile.append(temp+";")
+        cfile.append(temp+"{")
+        for field in stct.fields:
+            f = _type_to_func(field.ctype)
+            if f is None:
+                panic("can not find convert func for " + field.ctype)
+
+            cfile.append(
+                '    '+'{f}(dst,"{n}", t->{n});'.format(f=f, n=field.name))
+
+        cfile.append("}")
+
+        # temp = "void {n}_from_json(struct {n} *t, JsonMap* dst)"\
+        #    .format(n=stct.name)
+        # cfile.append(temp+"{")
+        # cfile.append("}")
+
+        # hfile.append(temp+";")
 
     return (hfile, cfile)
 
@@ -100,7 +171,7 @@ def parse_cstruct(code: List[str]) -> CStruct | None:
 
 def exact_target_blocks(code: List[str]) -> List[List[str]]:
     blocks: List[List[str]] = []
-    curBlock = []
+    curBlock: List[str] = []
     for line in code:
         if len(curBlock) != 0:
             curBlock.append(line)
@@ -119,7 +190,6 @@ def save_file(filename: str, lines: List[str]):
 
 
 if __name__ == "__main__":
-    # 解析命令行参数，读取我们要处理的h文件
     if len(sys.argv) <= 1:
         print("Usage：mjgen.py xxx.h")
         exit(1)
@@ -132,7 +202,6 @@ if __name__ == "__main__":
     blocks = exact_target_blocks(code)
     structs = []
     for block in blocks:
-        # print("find block")
         s = parse_cstruct(block)
         if s is None:
             print("parse error when parse:")
@@ -142,8 +211,9 @@ if __name__ == "__main__":
         print(s)
         structs.append(s)
     hfile, cfile = generate_code(structs)
-    hout = "test.generated.h.log"
-    cout = "test.generated.c.log"
+
+    hout = "test.generated.h"
+    cout = "test.generated.c"
 
     save_file(hout, hfile)
     save_file(cout, cfile)

@@ -37,5 +37,10 @@ test:jsons/big_gen.json test_bin
 	./target/test_map
 	./target/test_array
 
+test-gen:
+	$(CC) $(CFLAGS) -I./test_gen  ./test_gen/main.c ./test_gen/test.generated.c -o target/test_gen $(LIBS)
+
+
+
 clean:
 	rm -rf target

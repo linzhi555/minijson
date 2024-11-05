@@ -1,5 +1,6 @@
 *.o
 *.a
+*.generated.[ch]
 .cache
 .gdbinit
 compile_commands.json

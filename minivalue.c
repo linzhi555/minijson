@@ -4,6 +4,24 @@
 void init_jvalue_null(JsonValue *v) {
     v->type = JNULL;
 }
+
+void init_jvalue_int(JsonValue *v, int64_t i) {
+    v->type = JNUM;
+    v->jsonNum.isInt = true;
+    v->jsonNum.Int64 = i;
+}
+
+void init_jvalue_float(JsonValue *v, double f) {
+    v->type = JNUM;
+    v->jsonNum.isInt = false;
+    v->jsonNum.Double = f;
+}
+
+void init_jvalue_bool(JsonValue *v, bool b) {
+    v->type = JBOOL;
+    v->jsonBool.data = b;
+}
+
 void free_jvalue(JsonValue *v) {
     switch (v->type) {
     case JARRAY:

@@ -184,9 +184,24 @@ int jmap_set_str(JsonMap *map, const char *key, const char *val) {
     jstr_cpy_cstr(&newval.jsonStr, val, strlen(val));
     return jmap_set(map, key, newval);
 }
-int jmap_set_int(JsonMap *map, const char *key, size_t val);
-int jmap_set_float(JsonMap *map, const char *key, double val);
-int jmap_set_bool(JsonMap *map, const char *key, bool val);
+
+int jmap_set_int(JsonMap *map, const char *key, int64_t val) {
+    JsonValue newval;
+    init_jvalue_int(&newval, val);
+    return jmap_set(map, key, newval);
+}
+
+int jmap_set_float(JsonMap *map, const char *key, double val) {
+    JsonValue newval;
+    init_jvalue_float(&newval, val);
+    return jmap_set(map, key, newval);
+}
+
+int jmap_set_bool(JsonMap *map, const char *key, bool val) {
+    JsonValue newval;
+    init_jvalue_bool(&newval, val);
+    return jmap_set(map, key, newval);
+}
 
 void jmap_output(JsonStr *dist, const JsonMap *map, int indent) {
     assert(dist != NULL);

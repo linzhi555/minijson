@@ -26,40 +26,109 @@ class CStruct:
     fields: List[CStructField]
 
 
-c_int_types = ["int64_t",]
-c_float_types = ["double",]
+c_int_types = ["int64_t",
+               "int",
+               "uint64_t",
+               "unsigned int",
+               "size_t",
+               "ssize_t",]
+
+c_float_types = ["double","float"]
+
 c_str_types = ["char*",]
-c_bool_types = ["bool",]
+
+c_bool_types = ["bool","_Bool"]
 
 
-def _type_to_func(ctype: str, isGet: bool) -> str | None:
-    ret = ""
+def _type_set_stmt(ctype: str, name: str) -> List[str] | None:
+    stmts: str
     if ctype in c_int_types:
-        ret = "jmap_{}_int"
+        stmts ='    jmap_set_int(dst, "{n}", (int64_t) t->{n});'.format(n=name)
+    elif ctype in c_float_types:
+        stmts = '    jmap_set_float(dst, "{n}", (double) t->{n});'.format(n=name)
+    elif ctype in c_str_types:
+        stmts = '    jmap_set_str(dst, "{n}", (const char*) t->{n});'.format(n=name)
+    elif ctype in c_bool_types:
+        stmts= '    jmap_set_str(dst, "{n}", (double) t->{n});'.format(n=name)
+    else:
+        return None
+    return stmts.split("\n")
+
+
+def _type_get_stmt(ctype: str, name: str) -> List[str] | None:
+    stmts: str = ''
+    if ctype in c_int_types:
+        stmts =  'int64_t {}_temp;\n'.format(name)
+        stmts += 'jmap_get_int(map, "{n}", &{n}_temp);\n'.format(n=name)
 
     elif ctype in c_float_types:
-        ret = "jmap_{}_float"
+        stmts =  'double {}_temp;\n'.format(name)
+        stmts += 'jmap_get_float(map, "{n}", &{n}_temp);\n'.format(n=name)
 
     elif ctype in c_str_types:
-        ret = "jmap_{}_str"
+        stmts =  'char* {}_temp;\n'.format(name)
+        stmts += 'jmap_get_str(map, "{n}", &{n}_temp);\n'.format(n=name)
+
 
     elif ctype in c_bool_types:
-        ret = "jmap_{}_bool"
-    else:
-        ret = None
+        stmts =  'bool {}_temp;\n'.format(name)
+        stmts += 'jmap_get_bool(map, "{n}", &{n}_temp);\n'.format(n=name)
 
-    if isGet:
-        ret = ret.format("get")
     else:
-        ret = ret.format("set")
+        return None
+
+    stmts += 'if (err != 0) return err;\n'
+    stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
+
+    ret = stmts.split('\n')
+    ret = ["    " + l for l in ret]
+    ret.append("")
+
     return ret
 
 
-def generate_code(origin: str, structs: List[CStruct])\
-        -> Tuple[List[str], List[str]]:
+def _generate_toMapFunc(stct: CStruct) -> Tuple[List[str], List[str]]:
+
+    hfile, cfile = [], []
+    temp = "void {n}_to_json(JsonMap* dst,const struct {n}* t)".format(n=stct.name)
+    hfile.append(temp+";")
+
+    cfile.append(temp+"{")
+    for field in stct.fields:
+        stmts = _type_set_stmt(field.ctype, field.name)
+        if stmts is None:
+            panic("can not generate set statement for type: " + field.ctype)
+        else:
+            cfile += stmts
+
+    cfile.append("}")
+    return (hfile, cfile)
+
+
+def _generate_fromMapFunc(stct: CStruct) -> Tuple[List[str], List[str]]:
+
+    hfile, cfile = [], []
+    temp = "int {n}_from_json(struct {n} *dst,const JsonMap* map)".format(n=stct.name)
+    hfile.append(temp+";")
+
+    cfile.append(temp+"{")
+    cfile.append('    '+'int err = 0;')
+    for field in stct.fields:
+        stmts = _type_get_stmt(field.ctype, field.name)
+        if stmts is None:
+            panic("can not generate set statement for type: " + field.ctype)
+        else:
+            cfile += stmts
+
+    cfile.append('    return 0;')
+    cfile.append("}")
+    return (hfile, cfile)
+
+
+def generate_code(origin: str, structs: List[CStruct]) -> Tuple[List[str], List[str]]:
     """
-    param: the original file where the structs definitions come from
-    param: some structs definitions then generate the convertion code
+    param origin: the original file where the structs definitions come from
+    param structs: some structs definitions then generate the convertion code
     return: (hfile,cfile)
     hfile means the content of .h file, cfile means the content .c file
     """
@@ -74,41 +143,12 @@ def generate_code(origin: str, structs: List[CStruct])\
     cfile.append('#include "{}"'.format(origin))
     cfile.append('#include "{}.generated.h"'.format(origin))
 
+    generates = [_generate_toMapFunc, _generate_fromMapFunc]
     for stct in structs:
-
-        temp = "void {n}_to_json(JsonMap* dst,const struct {n}* t)"\
-            .format(n=stct.name)
-        hfile.append(temp+";")
-
-        cfile.append(temp+"{")
-        for field in stct.fields:
-            f = _type_to_func(field.ctype, isGet=False)
-            if f is None:
-                panic("can not find convert func for " + field.ctype)
-
-            cfile.append(
-                '    '+'{f}(dst,"{n}", t->{n});'.format(f=f, n=field.name))
-
-        cfile.append("}")
-
-        temp = "int {n}_from_json(struct {n} *dst,const JsonMap* map)"\
-            .format(n=stct.name)
-        hfile.append(temp+";")
-
-        cfile.append(temp+"{")
-        cfile.append('    '+'int err = 0;')
-        for field in stct.fields:
-            f = _type_to_func(field.ctype, isGet=True)
-            if f is None:
-                panic("can not find convert func for " + field.ctype)
-
-            cfile.append('    err = {f}(map,"{n}", &dst->{n});'
-                         .format(f=f, n=field.name))
-
-            cfile.append('    if (err != 0) return err;')
-
-        cfile.append('    return 0;')
-        cfile.append("}")
+        for gfuncs in generates:
+            hAppends, cAppends = gfuncs(stct)
+            hfile += hAppends
+            cfile += cAppends
 
     return (hfile, cfile)
 
@@ -211,7 +251,7 @@ if __name__ == "__main__":
     for block in blocks:
         s = parse_cstruct(block)
         if s is None:
-            print("parse error when parse:")
+            print("parse error when parsing:")
             for line in block:
                 print(line)
             sys.exit(1)

@@ -22,7 +22,7 @@ int main() {
     }
     free_jmap(&map);
 
-    printf("%ld %s %ld %f %f\n", stu2.student_id, stu2.name, stu2.age, stu2.weight, stu2.height);
+    printf("%d %s %d %f %f\n", stu2.student_id, stu2.name, stu2.age, stu2.weight, stu2.height);
 
     printf("test mjgen.py SUCCESS\n");
     printf("=========================\n");

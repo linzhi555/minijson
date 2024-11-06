@@ -1,11 +1,12 @@
 #pragma once
+#include <stddef.h>
 #include <stdint.h>
 // generate:minijson
 struct Student {
-    int64_t student_id;
+    int student_id;
     char* name;
-    int64_t age;
-    double height;
+    unsigned int age;
+    float height;
     double weight;
 };
 
@@ -13,5 +14,5 @@ struct Student {
 struct Teacher {
     int64_t teacher_id;
     char* name;
-    int64_t age;
+    size_t age;
 };

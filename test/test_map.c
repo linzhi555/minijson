@@ -31,9 +31,9 @@ int main() {
         snprintf(k, KVNUM, "student%d", i);
         snprintf(v, KVNUM, "id%d", i);
 
-        JsonValue jv = jmap_get(&map, k);
-        assert(jv.type == JSTR);
-        assert(strcmp(jv.jsonStr.data, v) == 0);
+        const JsonValue* jv = jmap_get_ref(&map, k);
+        assert(jv->type == JSTR);
+        assert(strcmp(jv->jsonStr.data, v) == 0);
     }
     assert(map.kvLen == KVNUM);
     printf("%d\n", map.indexCap);

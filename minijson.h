@@ -141,12 +141,19 @@ void jarray_output(JsonStr* dist, const JsonArray* array, int indent);
 // JsonMap methods
 void init_jmap(JsonMap* dst);
 void free_jmap(JsonMap* dst);
+
 int jmap_set(JsonMap* map, const char* key, JsonValue val);
 int jmap_set_str(JsonMap* map, const char* key, const char* val);
 int jmap_set_int(JsonMap* map, const char* key, int64_t val);
 int jmap_set_float(JsonMap* map, const char* key, double val);
 int jmap_set_bool(JsonMap* map, const char* key, bool val);
-JsonValue jmap_get(JsonMap* map, const char* key);
+
+JsonValue* jmap_get_ref(const JsonMap* map, const char* key);
+int jmap_get_str(const JsonMap* map, const char* key, char** val);
+int jmap_get_int(const JsonMap* map, const char* key, int64_t* val);
+int jmap_get_float(const JsonMap* map, const char* key, double* val);
+int jmap_get_bool(const JsonMap* map, const char* key, bool* val);
+
 int* jmap_delete(JsonMap* map, const char* key);
 void jmap_output(JsonStr* dist, const JsonMap* src, int indent);
 

@@ -26,68 +26,63 @@ class CStruct:
     fields: List[CStructField]
 
 
-c_int_types = [
-    "char",
-    "short",
-    "int",
-    "int64_t",
-    "long",
-    "long long",
-]
-c_int_types = c_int_types + ["unsigned "+t for t in c_int_types]
-c_int_types = c_int_types + ["const "+t for t in c_int_types]
+c_int_types = ["int64_t",]
+c_float_types = ["double",]
+c_str_types = ["char*",]
+c_bool_types = ["bool",]
 
 
-c_float_types = [
-    "double",
-    "float",
-]
-c_float_types = c_float_types + ["const "+t for t in c_float_types]
-print(c_float_types)
-
-c_str_types = [
-    "char*",
-    "const char*",
-]
-
-
-def _type_to_func(ctype: str) -> str | None:
+def _type_to_func(ctype: str, isGet: bool) -> str | None:
+    ret = ""
     if ctype in c_int_types:
-        return "jmap_set_int"
+        ret = "jmap_{}_int"
 
     elif ctype in c_float_types:
-        return "jmap_set_float"
+        ret = "jmap_{}_float"
 
     elif ctype in c_str_types:
-        return "jmap_set_str"
+        ret = "jmap_{}_str"
 
-    elif ctype in ["bool"]:
-        return "jmap_set_bool"
+    elif ctype in c_bool_types:
+        ret = "jmap_{}_bool"
+    else:
+        ret = None
 
-    return None
+    if isGet:
+        ret = ret.format("get")
+    else:
+        ret = ret.format("set")
+    return ret
 
 
-def generate_code(structs: List[CStruct]) -> Tuple[List[str], List[str]]:
+def generate_code(origin: str, structs: List[CStruct])\
+        -> Tuple[List[str], List[str]]:
     """
-    give some structs definitions then generate the convertion code
-    return (hfile,cfile)
+    param: the original file where the structs definitions come from
+    param: some structs definitions then generate the convertion code
+    return: (hfile,cfile)
     hfile means the content of .h file, cfile means the content .c file
     """
     hfile: List[str] = []
     cfile: List[str] = []
 
+    hfile.append('#pragma once')
     hfile.append('#include "minijson.h"')
+    hfile.append('#include "{}"'.format(origin))
+
     cfile.append('#include "minijson.h"')
+    cfile.append('#include "{}"'.format(origin))
+    cfile.append('#include "{}.generated.h"'.format(origin))
 
     for stct in structs:
 
-        temp = "void {n}_to_json(JsonMap* dst,struct {n}* t)"\
+        temp = "void {n}_to_json(JsonMap* dst,const struct {n}* t)"\
             .format(n=stct.name)
         hfile.append(temp+";")
 
         cfile.append(temp+"{")
         for field in stct.fields:
-            f = _type_to_func(field.ctype)
+            f = _type_to_func(field.ctype, isGet=False)
             if f is None:
                 panic("can not find convert func for " + field.ctype)
 
@@ -96,12 +91,24 @@ def generate_code(structs: List[CStruct]) -> Tuple[List[str], List[str]]:
 
         cfile.append("}")
 
-        # temp = "void {n}_from_json(struct {n} *t, JsonMap* dst)"\
-        #    .format(n=stct.name)
-        # cfile.append(temp+"{")
-        # cfile.append("}")
+        temp = "int {n}_from_json(struct {n} *dst,const JsonMap* map)"\
+            .format(n=stct.name)
+        hfile.append(temp+";")
 
-        # hfile.append(temp+";")
+        cfile.append(temp+"{")
+        cfile.append('    '+'int err = 0;')
+        for field in stct.fields:
+            f = _type_to_func(field.ctype, isGet=True)
+            if f is None:
+                panic("can not find convert func for " + field.ctype)
+
+            cfile.append('    err = {f}(map,"{n}", &dst->{n});'
+                         .format(f=f, n=field.name))
+
+            cfile.append('    if (err != 0) return err;')
+
+        cfile.append('    return 0;')
+        cfile.append("}")
 
     return (hfile, cfile)
 
@@ -183,8 +190,8 @@ def exact_target_blocks(code: List[str]) -> List[List[str]]:
     return blocks
 
 
-def save_file(filename: str, lines: List[str]):
-    with open(filename, "w") as file:
+def save_file(filepath: str, lines: List[str]):
+    with open(filepath, "w") as file:
         for line in lines:
             file.write(line + os.linesep)  # 使用系统特定的换行符
 
@@ -193,9 +200,9 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print("Usage：mjgen.py xxx.h")
         exit(1)
-    filename = sys.argv[1]
+    filepath = sys.argv[1]
 
-    f = open(filename)
+    f = open(filepath)
     code = f.readlines()
     code = [line.rstrip("\n") for line in code]
 
@@ -210,10 +217,11 @@ if __name__ == "__main__":
             sys.exit(1)
         print(s)
         structs.append(s)
-    hfile, cfile = generate_code(structs)
 
-    hout = "test.generated.h"
-    cout = "test.generated.c"
+    hfile, cfile = generate_code(os.path.basename(filepath), structs)
+
+    hout = filepath + ".generated.h"
+    cout = filepath + ".generated.c"
 
     save_file(hout, hfile)
     save_file(cout, cfile)

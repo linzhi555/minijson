@@ -51,7 +51,7 @@ static void free_index(JsonMap *map) {
     map->indexes = NULL;
 }
 
-static Index *find_index(JsonMap *map, const char *key) {
+static Index *find_index(const JsonMap *map, const char *key) {
     int idx = HASH_CHARS(key, map->indexCap);
     Index *p = &map->indexes[idx];
     if (p->ptr == NULL) return NULL;
@@ -166,17 +166,6 @@ int jmap_set(JsonMap *map, const char *key, JsonValue val) {
     return 0;
 }
 
-JsonValue jmap_get(JsonMap *map, const char *key) {
-    Index *temp = find_index(map, key);
-    if (temp != NULL) {
-        return *temp->ptr->value;
-    }
-
-    JsonValue ret;
-    init_jvalue_null(&ret);
-    return ret;
-}
-
 int jmap_set_str(JsonMap *map, const char *key, const char *val) {
     JsonValue newval;
     newval.type = JSTR;
@@ -201,6 +190,44 @@ int jmap_set_bool(JsonMap *map, const char *key, bool val) {
     JsonValue newval;
     init_jvalue_bool(&newval, val);
     return jmap_set(map, key, newval);
+}
+
+JsonValue *jmap_get_ref(const JsonMap *map, const char *key) {
+    Index *temp = find_index(map, key);
+    if (temp != NULL) {
+        return temp->ptr->value;
+    }
+
+    return NULL;
+}
+
+int jmap_get_str(const JsonMap *map, const char *key, char **val) {
+    const JsonValue *jv = jmap_get_ref(map, key);
+    if (jv->type != JSTR) return -1;
+    *val = calloc(jv->jsonStr.len + 1, sizeof(char));
+    memcpy(*val, jv->jsonStr.data, sizeof(char) * (jv->jsonStr.len + 1));
+    return 0;
+}
+
+int jmap_get_int(const JsonMap *map, const char *key, int64_t *val) {
+    const JsonValue *jv = jmap_get_ref(map, key);
+    if (jv->type != JNUM && !jv->jsonNum.isInt) return -1;
+    *val = jv->jsonNum.Int64;
+    return 0;
+}
+
+int jmap_get_float(const JsonMap *map, const char *key, double *val) {
+    const JsonValue *jv = jmap_get_ref(map, key);
+    if (jv->type == JNUM && jv->jsonNum.isInt) return -1;
+    *val = jv->jsonNum.Double;
+    return 0;
+}
+
+int jmap_get_bool(const JsonMap *map, const char *key, bool *val) {
+    const JsonValue *jv = jmap_get_ref(map, key);
+    if (jv->type != JBOOL) return -1;
+    *val = jv->jsonBool.data;
+    return 0;
 }
 
 void jmap_output(JsonStr *dist, const JsonMap *map, int indent) {

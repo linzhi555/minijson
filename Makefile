@@ -21,5 +21,5 @@ mjfmt: libminijson.a
 	$(CC) $(CFLAGS) ./mjfmt.c -o mjfmt -lminijson -L./
 
 clean:
-	rm -f  ./*.o ./*.a
+	rm -f  ./*.o ./*.a ./*.generated.c ./*.generated.h ./mjfmt
 

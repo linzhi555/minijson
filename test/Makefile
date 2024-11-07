@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -Wall -Wextra -O1 -g  -pg
+CFLAGS = -Wall -Wextra -O1 -g
 LIBS=-I../ -L../ -lminijson
 PY3=python3
 

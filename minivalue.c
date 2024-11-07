@@ -22,6 +22,15 @@ void init_jvalue_bool(JsonValue *v, bool b) {
     v->jsonBool.data = b;
 }
 
+void init_jvalue_array(JsonValue *v, JsonArray array) {
+    v->type = JARRAY;
+    v->jsonArray = array;
+}
+void init_jvalue_map(JsonValue *v, JsonMap map) {
+    v->type = JMAP;
+    v->jsonMap = map;
+}
+
 void free_jvalue(JsonValue *v) {
     switch (v->type) {
     case JARRAY:

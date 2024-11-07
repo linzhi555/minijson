@@ -42,16 +42,30 @@ c_bool_types = ["bool","_Bool"]
 
 def _type_set_stmt(ctype: str, name: str) -> List[str] | None:
     stmts: str
+
     if ctype in c_int_types:
         stmts ='    jmap_set_int(dst, "{n}", (int64_t) t->{n});'.format(n=name)
+
     elif ctype in c_float_types:
         stmts = '    jmap_set_float(dst, "{n}", (double) t->{n});'.format(n=name)
+
     elif ctype in c_str_types:
         stmts = '    jmap_set_str(dst, "{n}", (const char*) t->{n});'.format(n=name)
+
     elif ctype in c_bool_types:
         stmts= '    jmap_set_str(dst, "{n}", (double) t->{n});'.format(n=name)
+
+    elif ctype.startswith("struct"):
+        tname = ctype.split()[1]
+
+        stmts=  '    JsonMap {}_temp;\n'.format(name)
+        stmts+= '    init_jmap(&{}_temp);\n'.format(name)
+        stmts+= '    {t}_to_json(&{n}_temp,  &t->{n});\n'.format (t=tname,n=name)
+        stmts+= '    jmap_set_map(dst,"{n}",{n}_temp);\n'.format (n=name)
+
     else:
         return None
+
     return stmts.split("\n")
 
 
@@ -59,26 +73,40 @@ def _type_get_stmt(ctype: str, name: str) -> List[str] | None:
     stmts: str = ''
     if ctype in c_int_types:
         stmts =  'int64_t {}_temp;\n'.format(name)
-        stmts += 'jmap_get_int(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'err = jmap_get_int(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'if (err != 0) return err;\n'
+        stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
 
     elif ctype in c_float_types:
         stmts =  'double {}_temp;\n'.format(name)
-        stmts += 'jmap_get_float(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'err = jmap_get_float(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'if (err != 0) return err;\n'
+        stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
 
     elif ctype in c_str_types:
         stmts =  'char* {}_temp;\n'.format(name)
-        stmts += 'jmap_get_str(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'err = jmap_get_str(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'if (err != 0) return err;\n'
+        stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
 
 
     elif ctype in c_bool_types:
         stmts =  'bool {}_temp;\n'.format(name)
-        stmts += 'jmap_get_bool(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'err = jmap_get_bool(map, "{n}", &{n}_temp);\n'.format(n=name)
+        stmts += 'if (err != 0) return err;\n'
+        stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
+
+    elif ctype.startswith("struct"):
+        tname = ctype.split()[1]
+        stmts = 'JsonValue* jv_{n} = jmap_get_ref(map,"{n}");\n'.format(n=name)
+        stmts += 'if (jv_{n} == NULL) return 1;\n'.format(n=name)
+        stmts += 'if (jv_{n}->type != JMAP) return 1;\n'.format(n=name)
+        stmts += 'err = {t}_from_json (&dst->{n},&jv_{n}->jsonMap);\n'.format (t=tname,n=name)
+        stmts += 'if (err != 0) return err;'
 
     else:
         return None
 
-    stmts += 'if (err != 0) return err;\n'
-    stmts += 'dst->{n} = ({t}) {n}_temp;'.format(t=ctype,n=name)
 
     ret = stmts.split('\n')
     ret = ["    " + l for l in ret]
@@ -116,7 +144,7 @@ def _generate_fromMapFunc(stct: CStruct) -> Tuple[List[str], List[str]]:
     for field in stct.fields:
         stmts = _type_get_stmt(field.ctype, field.name)
         if stmts is None:
-            panic("can not generate set statement for type: " + field.ctype)
+            panic("can not generate get statement for type: " + field.ctype)
         else:
             cfile += stmts
 

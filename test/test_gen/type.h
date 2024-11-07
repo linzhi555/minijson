@@ -16,3 +16,9 @@ struct Teacher {
     char* name;
     size_t age;
 };
+
+// generate:minijson
+struct Class {
+    struct Student s;
+    struct Teacher t;
+};

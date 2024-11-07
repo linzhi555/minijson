@@ -52,7 +52,7 @@ static void free_index(JsonMap *map) {
 }
 
 static Index *find_index(const JsonMap *map, const char *key) {
-    int idx = HASH_CHARS(key, map->indexCap);
+    uint32_t idx = HASH_CHARS(key, map->indexCap);
     Index *p = &map->indexes[idx];
     if (p->ptr == NULL) return NULL;
 
@@ -125,6 +125,11 @@ void free_jmap(JsonMap *map) {
     free_index(map);
 }
 
+//
+// below is the boring glue code.
+//
+
+
 int jmap_set(JsonMap *map, const char *key, JsonValue val) {
     assert(key != NULL);
     assert(map != NULL);
@@ -189,6 +194,18 @@ int jmap_set_float(JsonMap *map, const char *key, double val) {
 int jmap_set_bool(JsonMap *map, const char *key, bool val) {
     JsonValue newval;
     init_jvalue_bool(&newval, val);
+    return jmap_set(map, key, newval);
+}
+
+int jmap_set_map(JsonMap *map, const char *key, JsonMap val) {
+    JsonValue newval;
+    init_jvalue_map(&newval, val);
+    return jmap_set(map, key, newval);
+}
+
+int jmap_set_array(JsonMap *map, const char *key, JsonArray val) {
+    JsonValue newval;
+    init_jvalue_array(&newval, val);
     return jmap_set(map, key, newval);
 }
 

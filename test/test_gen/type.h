@@ -1,7 +1,7 @@
 #pragma once
 #include <stddef.h>
 #include <stdint.h>
-// generate:minijson
+// generate: minijson
 struct Student {
     int student_id;
     char* name;
@@ -10,14 +10,14 @@ struct Student {
     double weight;
 };
 
-// generate:minijson
+// generate: minijson
 struct Teacher {
     int64_t teacher_id;
     char* name;
     size_t age;
 };
 
-// generate:minijson
+// generate: minijson
 struct Class {
     struct Student s;
     struct Teacher t;

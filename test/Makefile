@@ -42,8 +42,5 @@ test:jsons/big_gen.json test_bin
 	./target/test_array
 	./target/test_gen
 
-
-
-
 clean:
-	rm -rf target
+	rm -rf target ./test_gen/*.generated.*
